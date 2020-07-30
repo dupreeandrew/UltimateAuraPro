@@ -1,0 +1,86 @@
+Hello!
+
+Thank you for your purchase of UltimateAuraPro!
+This plugin is currently under beta, and I understand more features could be implemented.
+I'm always open to suggestions, so please feel free to send them to my SpigotMC account.
+
+Quick summary of the plugin:
+This plugin allows players to have "auras," which can add potion effects to the player or others around the player
+Create an aura in auras.yml, and players with the proper permission can use it with the "/aura" command.
+
+If you are having a hard time understanding the config, please do send me a message as well.
+
+Permissions
+uap.admin - Access to everything
+uap.aura.<name> - Access to an aura specified in auras.yml, accessible via /aura <name>
+
+Commands:
+/aura <aura-name> - Use an aura defined in auras.yml
+/aura admin - View a list of admin commands
+
+FAQ (predictably?):
+Q: Some potion effects aren't working on certain mobs
+A: Some mobs are immune to certain potion effects. Like using HARM on zombies (you'd want to use HEAL).
+    Do check on Google if this may apply to you
+
+Q: Where can I find hex codes for colors?
+A: https://htmlcolorcodes.com/color-picker/ , or Google
+
+Q: Where can I get a list of aura effects?
+A: https://i.gyazo.com/a2410d6997f29c7ce2b2df3a64d327a3.png
+
+Q: How do I use the aura wand?
+A: Get an aura wand via "/aura admin wand", and right click targets. Admins may need to find a way to distribute them.
+    If it helps, admins/console can type "/aura admin wand <player-name>" too, to hand them out.
+
+Q: More details on async?
+A: Async is really used for the aura appearances, as there's quite a bit of math involved. A lot of the heavy math is
+    computed once the plugin loads. Periodically determining the location of the aura design can require a lot of math
+    though, especially if rotation is involved. Pretty much all of this math is done through async, along with the
+    actual particle spawning itself, so all of this is running as a "background" process while your server continues
+    to operate normally.
+
+Q: Can players see all the auras using /aura?
+A: Players can only see the auras that they have access to
+
+
+auras.yml help:
+
+Available Rotation Effects (under appearance)
+    none   - aura will not rotate at all. Minimal CPU usage & calculations
+    yaw    - aura will rotate to the direction of the player every repeat. Slight CPU usage due to increased calculations
+    slow   - aura will rotate slightly every repeat. Slight CPU usage due to increased calculations
+    always - aura will constantly rotate to match the player's yaw. This is good for particles that grow. Many more calculations.
+
+    Calculations are made to determine where a particle will spawn. Many of the calculations are optimized,
+    and are async, so the player will be less likely be susceptible to server lag caused by them.
+
+Available Aura Effect Targets (under aura-effects)
+    none        - Effects are given to nobody (so disabled, and radius is ignored)
+    self        - Effects are given only to the aura user
+    wand        - Effects are given to selected entities within radius through the Aura Wand item (/aura wand)
+    wand-self   - Wand + Self combined
+    all         - Effects are given to everyone within radius
+    others      - Effects are given to everyone within radius, minus the aura user
+    hostile     - Effects are given to hostile mobs within radius only
+    non-hostile - Effects are given to everyone within radius except hostile mobs
+
+
+permanent-auras.yml help:
+Basically, you can make it so an aura created in auras.yml appears in nature, and so it's not attached to a player.
+These auras are called "permanent auras"
+To do this, use the "/aura admin padd <id> <aura-name>" command.
+    <id> = id of the permanent aura. useful in case you want to delete a permanent aura using "/aura admin pdelete"
+    <aura-name> = name of aura defined in auras.yml
+
+
+SOME TIPS FOR NERDS (if you're bored):
++ auras.yml -> aura -> appearance -> growth settings:
+
+    Let's talk about the "seconds-between-particles" property.. 50 FPS is considered smooth by many people.
+    So if you set this to 0.02 seconds, pretty much every frame will see new particles being created.
+    I recommend 0.02 being the minimum. If you want more particles being spawned, just increase
+    "num-particles-at-a-time." Having a really high "num-particles-at-a-time" is significantly cheaper in CPU usage
+    compared to a really low "seconds-between-particles." "num-particles-at-a-time" is essentially a buffer.
+
+    The lowest possible is 0.005 seconds, so 200FPS.

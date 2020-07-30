@@ -1,0 +1,259 @@
+# These are the pre-configured auras.
+# Players can toggle auras through /aura <aura name>
+# Example: /aura coolhelix
+
+# Players can only use an aura if they have the permission for it: aurapro.aura.<aura-name>
+# For example, to use the aura "fastminer", players will need the permission: aurapro.aura.fastminer
+# Players can see a list of auras that they have through /aura help
+
+# Feel free to remove/add your own auras, but try to ensure that the properties for each shape stays.
+# Available aura types:
+# none, helix, forcefield, star, circle, whirl
+
+jumper:
+  description: "&7Gives jump 2 & slow 1"
+  # The real purpose of auras. Here, players with auras can give/receive (a) potion effect(s).
+  aura-effects:
+    # Possible Targets:
+    # none        - Effects are given to nobody (so disabled)
+    # self        - Effects are given only to the aura user. Radius value is gnored
+    # wand        - Effects are given to selected entities within radius through the Aura Wand item (/aura wand)
+    # wand-self   - Wand + Self combined
+    # all         - Effects are given to everyone within radius
+    # others      - Effects are given to everyone within radius, minus the aura user
+    # hostile     - Effects are given to hostile mobs within radius only
+    # non-hostile - Effects are given to everyone within radius except hostile mobs
+    target: self
+    radius: 0.00
+    # For a list of potion effects, see https://i.gyazo.com/a2410d6997f29c7ce2b2df3a64d327a3.png
+    list:
+      - JUMP:2
+      - SLOW:1
+  appearance:
+    type: helix
+    radius: 1.50
+    height: 0.75
+    particle-thickness: 1 # must be a whole number
+    distance-between-loops: .25
+    spacing-between-particles: 0.75
+    seconds-until-repeat: 1.0
+    # How the aura should rotate.
+    # Options:
+    # - none (do not rotate at all. Minimal CPU usage)
+    # - yaw (rotate to the direction of the player every repeat. Slight CPU usage due to increased calculations)
+    # - slow (rotate slightly every repeat. Slight CPU usage due to increased calculations)
+    # - always (constantly update every particle with direction of player. Many more calculations are being made)
+    # Many of the calculations are async, so players should be less susceptible to lag no matter the rotation method.
+    rotation-method: none
+    colors:
+      # format --> color hex code: occurrence frequency
+      # find color hex codes here: https://htmlcolorcodes.com/color-picker/
+      "#41dbee": 1 # blue
+    # Growth refers to any particle shapes being created over a period of time (so not instantly)
+    # For examples, users can type "/ptc grow" to make it so their trails grow over time, rather than instantly.
+    # These config are per-player.
+    growth-settings:
+      # whether or not this aura shape should instantly be emitted, or it should grow over time
+      enabled: true
+      # the interval at which particles should spawn.
+      seconds-between-particles: .05
+      # how many particles should spawn at a time, per player.
+      num-particles-at-a-time: 3
+forcefield:
+  description: "&7Gives resistance 1"
+  aura-effects:
+    target: wand
+    radius: 10.00
+    list:
+      - DAMAGE_RESISTANCE:1
+  appearance:
+    type: forcefield
+    radius: 1.75
+    particle-thickness: 1
+    spacing-between-particles: 0.3
+    seconds-until-repeat: 4.0
+    rotation-method: none
+    colors:
+      "#2a2b2d": 1 # dark gray
+      "#2da8d8": 1 # light blue
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 16
+star:
+  description: "&7Gives Strength 1"
+  aura-effects:
+    target: self
+    radius: 0.00
+    list:
+      - INCREASE_DAMAGE:1
+  appearance:
+    type: star
+    radius: 1.25
+    particle-thickness: 3
+    spacing-between-particles: 0.25
+    seconds-until-repeat: 1.2
+    rotation-method: slow
+    colors:
+      "#d5212e": 1 # red
+    growth-settings:
+      enabled: true
+      seconds-between-particles: 0.02
+      num-particles-at-a-time: 4
+cleric:
+  description: "&7Heal not only yourself, but those around you!"
+  aura-effects:
+    target: all
+    radius: 1.50
+    list:
+      - REGENERATION:1
+  appearance:
+    type: circle
+    radius: 1.25
+    particle-thickness: 2
+    spacing-between-particles: 0.20
+    seconds-until-repeat: 0.5
+    rotation-method: none
+    colors:
+      "#9b1c31": 1 # royal red
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 2
+circle:
+  description: "&7Show off your inner aura!"
+  aura-effects:
+    target: none
+    radius: 0.00
+    list:
+  appearance:
+    type: circle
+    radius: 1.25
+    particle-thickness: 2
+    spacing-between-particles: 0.20
+    seconds-until-repeat: 0.5
+    rotation-method: none
+    colors:
+      "#FFFF00": 1 # yellow
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 2
+poison:
+  description: "&aPoison your targets!"
+  aura-effects:
+    target: others
+    radius: 10.00
+    list:
+      # recall that offensive effects like HARM & POISON don't work on every creature
+      - POISON:1
+  appearance:
+    type: circle
+    radius: 1.25
+    particle-thickness: 2
+    spacing-between-particles: 0.20
+    seconds-until-repeat: 0.5
+    rotation-method: none
+    colors:
+      "#228B22": 1 # green
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 2
+deathgiver:
+  description: "&8Give those death through your wand"
+  aura-effects:
+    target: wand
+    radius: 7.50
+    list:
+      # recall that offensive effects like HARM & POISON don't work on every creature
+      - HARM:1
+  appearance:
+    type: circle
+    radius: 1.25
+    particle-thickness: 2
+    spacing-between-particles: 0.20
+    seconds-until-repeat: 0.7
+    rotation-method: none
+    colors:
+      "#000000": 1 # black
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 2
+whirl:
+  description: "&7Show off your inner aura! (does nothing)"
+  aura-effects:
+    target: none
+    radius: 0.00
+    list:
+  appearance:
+    type: whirl
+    radius: 1.25
+    particle-thickness: 1
+    spacing-between-particles: 0.09
+    seconds-until-repeat: 1.5
+    rotation-method: none
+    colors:
+      "#adefd1": 36 # teal
+      "#00203f": 36 # deep blue
+      "#9400D3": 9  # dark violet
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 1
+
+# The below auras do not have any particle effects.
+fastminer:
+  type: none
+  description: "&7I love mining"
+  aura-effects:
+    target: self
+    radius: 0.00
+    list:
+      - FAST_DIGGING:1
+selfhealing:
+  type: none
+  description: "&6Healing is good for the &cheart!"
+  aura-effects:
+    target: self
+    radius: 0.00
+    list:
+      - REGENERATION:2
+invisible:
+  type: none
+  description: "&7Become an invisible person"
+  aura-effects:
+    target: self
+    radius: 0.00
+      - INVISIBILITY:1
+speed:
+  type: none
+  description: "&7Run like the wind"
+  aura-effects:
+    target: all
+    radius: 5.00
+    list:
+      - SPEED:1
+stress-test:
+  description: "&7Stress test performance. This may lag the client.. but try monitoring the server TPS through console"
+  appearance:
+    type: whirl
+    radius: 200.00
+    particle-thickness: 4
+    spacing-between-particles: .05
+    seconds-until-repeat: .1
+    rotation-method: always
+    colors:
+      "#adefd1": 36 # teal
+      "#00203f": 36 # deep blue
+      "#9400D3": 9  # dark violet
+    growth-settings:
+      enabled: true
+      seconds-between-particles: .05
+      num-particles-at-a-time: 1500
+  aura-effects:
+    target: all
+    radius: 7.50
+    list:
+      - LUCK:1
