@@ -173,13 +173,15 @@ public enum AuraConfig {
         private ShapeCreator getShapeCreator(Particools particools, double radius) {
             switch (id) {
                 case 0:
-                    return particools.getSphereCreator(radius);
+                    ShapeCreator sphereCreator = particools.getSphereCreator(radius);
+                    sphereCreator.addOffset(0, 0.75, 0);
+                    return sphereCreator;
                 case 1:
                     return particools.getStarCreator(radius);
                 case 2:
                     return particools.getCircleCreator(radius);
                 case 3:
-                    return particools.getWhirlCreator(radius, 12);
+                    return particools.getWhirlCreator(radius, 5);
             }
             throw new UnsupportedOperationException("Could not map enum id to a ultimateaurapro shape creator method.");
         }

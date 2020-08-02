@@ -6,7 +6,10 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 public class LocationUtil {
     public static double getXandZDistance(Location loc1, Location loc2) {
@@ -52,9 +55,9 @@ public class LocationUtil {
         return clonedQueue;
     }
 
-    public static Queue<Collection<Vector>> cloneSetsOfOffsets(Queue<Collection<Vector>> setsOfOffsets) {
-        Queue<Collection<Vector>> setsOfOffsetsClone = new LinkedList<>();
-        for (Collection<Vector> setOfOffset : setsOfOffsets) {
+    public static Queue<Iterable<Vector>> cloneSetsOfOffsets(Queue<? extends Iterable<Vector>> setsOfOffsets) {
+        Queue<Iterable<Vector>> setsOfOffsetsClone = new LinkedList<>();
+        for (Iterable<Vector> setOfOffset : setsOfOffsets) {
             List<Vector> offsetList = new ArrayList<>();
             for (Vector offset : setOfOffset) {
                 Vector offsetCopy = offset.clone();

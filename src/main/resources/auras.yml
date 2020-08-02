@@ -1,23 +1,26 @@
 # These are the pre-configured auras.
 # Players can toggle auras through /aura <aura name>
-# Example: /aura coolhelix
-
-# Players can only use an aura if they have the permission for it: aurapro.aura.<aura-name>
-# For example, to use the aura "fastminer", players will need the permission: aurapro.aura.fastminer
+# Example: /aura jumper
+#
+# Players can only use an aura if they have the permission for it: uap.aura.<aura-name>
+# For example, to use the aura "fastminer", players will need the permission: uap.aura.fastminer
 # Players can see a list of auras that they have through /aura help
-
+#
 # Feel free to remove/add your own auras, but try to ensure that the properties for each shape stays.
-# Available aura types:
+# Available aura appearance types:
 # none, helix, forcefield, star, circle, whirl
+#
+# Trying to add auras but not quite sure where to start?
+# Check the templates.yml file.
 
 jumper:
   description: "&7Gives jump 2 & slow 1"
-  # The real purpose of auras. Here, players with auras can give/receive (a) potion effect(s).
+  # Here, players with auras can give/receive (a) status effects & have commands executed on them by console
   aura-effects:
     # Possible Targets:
     # none        - Effects are given to nobody (so disabled)
-    # self        - Effects are given only to the aura user. Radius value is gnored
-    # wand        - Effects are given to selected entities within radius through the Aura Wand item (/aura wand)
+    # self        - Effects are given only to the aura user. Radius value is ignored
+    # wand        - Effects are given to selected entities within radius through the Aura Wand item (/aura admin wand)
     # wand-self   - Wand + Self combined
     # all         - Effects are given to everyone within radius
     # others      - Effects are given to everyone within radius, minus the aura user
@@ -29,9 +32,13 @@ jumper:
     list:
       - JUMP:2
       - SLOW:1
+    # Targets can also have commands enacted on them through console. Only works for actual players
+    # Format: <# seconds>s:</command>
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: helix
-    radius: 1.50
+    radius: 1.25
     height: 0.75
     particle-thickness: 1 # must be a whole number
     distance-between-loops: .25
@@ -62,24 +69,26 @@ jumper:
 forcefield:
   description: "&7Gives resistance 1"
   aura-effects:
-    target: wand
+    target: wand-self
     radius: 10.00
     list:
       - DAMAGE_RESISTANCE:1
-  appearance:
-    type: forcefield
-    radius: 1.75
-    particle-thickness: 1
-    spacing-between-particles: 0.3
-    seconds-until-repeat: 4.0
-    rotation-method: none
-    colors:
-      "#2a2b2d": 1 # dark gray
-      "#2da8d8": 1 # light blue
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 16
+    cmd-list:
+      - "3s:/a-test-command %username%"
+  appearances:
+    - type: forcefield
+      radius: 1.25
+      particle-thickness: 1
+      spacing-between-particles: 0.3
+      seconds-until-repeat: 4.0
+      rotation-method: none
+      colors:
+        "#2a2b2d": 1 # dark gray
+        "#2da8d8": 1 # light blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 16
 star:
   description: "&7Gives Strength 1"
   aura-effects:
@@ -87,6 +96,8 @@ star:
     radius: 0.00
     list:
       - INCREASE_DAMAGE:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: star
     radius: 1.25
@@ -101,12 +112,14 @@ star:
       seconds-between-particles: 0.02
       num-particles-at-a-time: 4
 cleric:
-  description: "&7Heal not only yourself, but those around you!"
+  description: "&7Heal not only yourself, but those around you! (wand activated)"
   aura-effects:
-    target: all
-    radius: 1.50
+    target: wand-self
+    radius: 8.50
     list:
-      - REGENERATION:1
+      - REGENERATION:2
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: circle
     radius: 1.25
@@ -115,17 +128,19 @@ cleric:
     seconds-until-repeat: 0.5
     rotation-method: none
     colors:
-      "#9b1c31": 1 # royal red
+      "#FF0000": 4 # red
+      "#0EBFE9": 1 # diamond blue
     growth-settings:
       enabled: true
       seconds-between-particles: .05
       num-particles-at-a-time: 2
 circle:
-  description: "&7Show off your inner aura!"
+  description: "&7Show off your inner aura! (does nothing)"
   aura-effects:
     target: none
     radius: 0.00
     list:
+    cmd-list:
   appearance:
     type: circle
     radius: 1.25
@@ -140,13 +155,15 @@ circle:
       seconds-between-particles: .05
       num-particles-at-a-time: 2
 poison:
-  description: "&aPoison your targets!"
+  description: "&aPoison those around you!"
   aura-effects:
     target: others
     radius: 10.00
     list:
       # recall that offensive effects like HARM & POISON don't work on every creature
       - POISON:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: circle
     radius: 1.25
@@ -168,6 +185,8 @@ deathgiver:
     list:
       # recall that offensive effects like HARM & POISON don't work on every creature
       - HARM:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: circle
     radius: 1.25
@@ -187,6 +206,7 @@ whirl:
     target: none
     radius: 0.00
     list:
+    cmd-list:
   appearance:
     type: whirl
     radius: 1.25
@@ -201,7 +221,7 @@ whirl:
     growth-settings:
       enabled: true
       seconds-between-particles: .05
-      num-particles-at-a-time: 1
+      num-particles-at-a-time: 5
 
 # The below auras do not have any particle effects.
 fastminer:
@@ -212,6 +232,8 @@ fastminer:
     radius: 0.00
     list:
       - FAST_DIGGING:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
 selfhealing:
   type: none
   description: "&6Healing is good for the &cheart!"
@@ -220,13 +242,18 @@ selfhealing:
     radius: 0.00
     list:
       - REGENERATION:2
+    cmd-list:
+      - "3s:/a-test-command %username%"
 invisible:
   type: none
   description: "&7Become an invisible person"
   aura-effects:
     target: self
     radius: 0.00
+    list:
       - INVISIBILITY:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
 speed:
   type: none
   description: "&7Run like the wind"
@@ -235,14 +262,18 @@ speed:
     radius: 5.00
     list:
       - SPEED:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
+
+# For internal use only
 stress-test:
   description: "&7Stress test performance. This may lag the client.. but try monitoring the server TPS through console"
   appearance:
     type: whirl
     radius: 200.00
-    particle-thickness: 4
-    spacing-between-particles: .05
-    seconds-until-repeat: .1
+    particle-thickness: 2
+    spacing-between-particles: .4
+    seconds-until-repeat: 1
     rotation-method: always
     colors:
       "#adefd1": 36 # teal
@@ -250,8 +281,8 @@ stress-test:
       "#9400D3": 9  # dark violet
     growth-settings:
       enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 1500
+      seconds-between-particles: .02
+      num-particles-at-a-time: 250
   aura-effects:
     target: all
     radius: 7.50

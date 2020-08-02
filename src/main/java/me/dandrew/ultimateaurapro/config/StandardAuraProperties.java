@@ -3,7 +3,6 @@ package me.dandrew.ultimateaurapro.config;
 import me.dandrew.ultimateaurapro.auragiving.AuraEffect;
 import me.dandrew.ultimateaurapro.auragiving.AuraTarget;
 import me.dandrew.ultimateaurapro.auragiving.RotationMethod;
-import me.dandrew.ultimateaurapro.util.Debug;
 import me.dandrew.ultimateaurapro.util.TickConverter;
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
@@ -21,9 +20,8 @@ public class StandardAuraProperties {
     private int thickness;
     private double spacingBetweenParticles;
     private double secondsUntilRepeat;
-    private transient RotationMethod rotationMethod;
-    private Map<String, Object> rawColorHexMap;
-    private transient Map<Color, Integer> colorFrequencyMap;
+    private RotationMethod rotationMethod;
+    private Map<Color, Integer> colorFrequencyMap;
     private boolean isGrowthAura;
     private double growthSecondsBetweenParticles;
     private int growthNumParticlesAtATime;
@@ -41,7 +39,6 @@ public class StandardAuraProperties {
         this.spacingBetweenParticles = spacingBetweenParticles;
         this.secondsUntilRepeat = secondsUntilRepeat;
         this.rotationMethod = rotationMethod;
-        this.rawColorHexMap = rawColorHexMap;
         this.colorFrequencyMap = getConvertedRawColorMap(rawColorHexMap);
         this.isGrowthAura = isGrowthAura;
         this.growthSecondsBetweenParticles = growthSecondsBetweenParticles;
@@ -118,13 +115,12 @@ public class StandardAuraProperties {
         ConfigurationSection auraEffectsSection = rawAuraProperties.getConfigurationSection("aura-effects");
 
         if (auraEffectsSection == null) {
-            Debug.send(1 + "");
-            return new AuraEffect(AuraTarget.NONE, 0, new ArrayList<>());
+            return new AuraEffect(AuraTarget.NONE, 0, new ArrayList<>(), new ArrayList<>());
         }
 
         String targetString = auraEffectsSection.getString("target", "none");
         if (targetString == null || targetString.equals("none")) {
-            return new AuraEffect(AuraTarget.NONE, 0, new ArrayList<>());
+            return new AuraEffect(AuraTarget.NONE, 0, new ArrayList<>(), new ArrayList<>());
         }
 
 
@@ -132,13 +128,15 @@ public class StandardAuraProperties {
         double radius = auraEffectsSection.getDouble("radius", 0.00);
 
         List<String> potionEffectStrings = auraEffectsSection.getStringList("list");
-        List<PotionEffect> potionEffects = (auraEffectsSection.isSet("list"))
-                ? getPotionEffects(rawAuraProperties.getName(), potionEffectStrings)
-                : new ArrayList<>();
+        List<PotionEffect> potionEffects = getPotionEffects(rawAuraProperties.getName(), potionEffectStrings);
 
-        return new AuraEffect(auraTarget, radius, potionEffects);
+        List<String> commandEffectStrings = auraEffectsSection.getStringList("cmd-list");
+        List<AuraEffect.PlayerCommandEffect> commandEffects = getCommandEffects(rawAuraProperties.getName(), commandEffectStrings);
+
+        return new AuraEffect(auraTarget, radius, potionEffects, commandEffects);
 
     }
+
 
 
     private static void throwConfigError(String auraName, String msg) {
@@ -151,7 +149,7 @@ public class StandardAuraProperties {
             String[] args = potionEffectString.split(":");
 
             if (args.length == 1) {
-                throwConfigError(auraName, "Bad potion effect format.");
+                throwConfigError(auraName, "Bad potion effect format. Use: <potion-effect-name>:<level>");
                 return null;
             }
 
@@ -170,10 +168,59 @@ public class StandardAuraProperties {
                 return null;
             }
 
-            PotionEffect potionEffect = new PotionEffect(potionEffectType, TickConverter.getTicksFromSeconds(5), level - 1);
+            double seconds = (potionEffectType.getName().equals("CONFUSION")) ? 5.0 : 3.5;
+            PotionEffect potionEffect = new PotionEffect(potionEffectType, TickConverter.getTicksFromSeconds(seconds), level - 1);
             potionEffects.add(potionEffect);
+
         }
+
         return Collections.unmodifiableList(potionEffects);
+
+    }
+
+    private static List<AuraEffect.PlayerCommandEffect> getCommandEffects(String auraName, List<String> commandEffectStrings) {
+        List<AuraEffect.PlayerCommandEffect> commandEffects = new ArrayList<>();
+        for (String commandEffectString : commandEffectStrings) {
+
+            if (commandEffectString.isEmpty()) {
+                continue;
+            }
+
+            if (commandEffectString.equals("3s:/a-test-command %username%")) {
+                continue;
+            }
+
+
+            String[] args = commandEffectString.split(":");
+
+            String syntaxMessage = "Read!!! Invalid player command effect syntax. " +
+                    "Example syntax: \"3s:/eco give %username% 100\". " +
+                    "In this example, this command will run every 3 seconds. What you typed: " + commandEffects;
+            if (args.length == 1) {
+                throwConfigError(auraName, syntaxMessage);
+                return null;
+            }
+
+            String secondsUntilRepeatString = args[0].replace("s", "");
+            double secondsUntilRepeat;
+            try {
+                secondsUntilRepeat = Double.parseDouble(secondsUntilRepeatString);
+            }
+            catch (NumberFormatException ex) {
+                throwConfigError(auraName, syntaxMessage);
+                return null;
+            }
+
+            String command = args[1];
+            if (command.charAt(0) == '/') {
+                command = command.substring(1);
+            }
+
+            AuraEffect.PlayerCommandEffect effect = new AuraEffect.PlayerCommandEffect(command, secondsUntilRepeat);
+            commandEffects.add(effect);
+
+        }
+        return commandEffects;
     }
 
 

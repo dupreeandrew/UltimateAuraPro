@@ -9,7 +9,6 @@ import me.dandrew.ultimateaurapro.util.VectorRotator;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
-import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Phaser;
@@ -24,17 +23,16 @@ public class ShapeCreator {
     private AsyncEmitter emitter;
     // Accessing / modifying these below variables MUST be done through the executorservice
     private Queue<Vector> particleOffsets;
-    private Queue<Collection<Vector>> particleOffsetCollections;
+    private Queue<Iterable<Vector>> particleOffsetCollections;
 
     // These are copies of the current object. These should not be modified (but may be re-referenced), as they're copies.
     private ShapeCreator cachedCopy;
-    private ShapeCreator cachedRotatedCopy;
 
     private Phaser modPhaser = new Phaser(1);
 
 
 
-    private ShapeCreator(AsyncEmitter emitter, Queue<Vector> particleOffsets, Queue<Collection<Vector>> particleOffsetCollections) {
+    private ShapeCreator(AsyncEmitter emitter, Queue<Vector> particleOffsets, Queue<Iterable<Vector>> particleOffsetCollections) {
         this.emitter = emitter;
         this.particleOffsets = particleOffsets;
         this.particleOffsetCollections = particleOffsetCollections;
@@ -44,7 +42,7 @@ public class ShapeCreator {
         return new ShapeCreator(emitter, particleOffsets, null);
     }
 
-    public static ShapeCreator fromQueuedOffsetCollections(AsyncEmitter emitter, Queue<Collection<Vector>> queueOfOffsetCollections) {
+    public static ShapeCreator fromQueuedOffsetCollections(AsyncEmitter emitter, Queue<Iterable<Vector>> queueOfOffsetCollections) {
         return new ShapeCreator(emitter, null, queueOfOffsetCollections);
     }
 
@@ -84,7 +82,7 @@ public class ShapeCreator {
     public synchronized ShapeCreator getCopy() {
         modPhaser.arriveAndAwaitAdvance();
         Queue<Vector> copiedParticleOffsets = null;
-        Queue<Collection<Vector>> copiedOffsetCollections = null;
+        Queue<Iterable<Vector>> copiedOffsetCollections = null;
         if (particleOffsets != null) {
             copiedParticleOffsets = LocationUtil.cloneOffsets(particleOffsets);
         }
@@ -130,7 +128,7 @@ public class ShapeCreator {
             }
         }
         else {
-            for (Collection<Vector> particleOffsetCollection : particleOffsetCollections) {
+            for (Iterable<Vector> particleOffsetCollection : particleOffsetCollections) {
                 for (Vector particleOffset : particleOffsetCollection) {
                     modifier.onOffsetModify(particleOffset);
                 }
@@ -163,7 +161,7 @@ public class ShapeCreator {
             return;
         }
         executorService.submit(() -> {
-            for (Collection<Vector> particleOffsetCollection : particleOffsetCollections) {
+            for (Iterable<Vector> particleOffsetCollection : particleOffsetCollections) {
                 emitter.emitParticles(location, particleOffsetCollection, clone);
             }
         });

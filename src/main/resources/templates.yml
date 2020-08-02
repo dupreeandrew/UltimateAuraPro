@@ -1,4 +1,4 @@
-# These are templates that I recommend copying and pasting when creating a new aura.
+# These are templates that I recommend copying and pasting into auras.yml when creating a new aura.
 # This file is for YOUR use, and has no effect on the plugin whatsoever.
 # Deleting this file will generate a fresh copy upon a plugin reload.
 #
@@ -21,6 +21,8 @@ helix-shaped-aura:
     radius: 7.50
     list:
       - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: helix
     radius: 1.50
@@ -45,6 +47,8 @@ forcefield-shaped-aura:
     radius: 7.50
     list:
       - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: forcefield
     radius: 1.75
@@ -59,6 +63,7 @@ forcefield-shaped-aura:
       enabled: true
       seconds-between-particles: 0.05
       num-particles-at-a-time: 16
+
 # Star Shaped Aura
 star-shaped-aura:
   description: "&7Star Aura"
@@ -67,6 +72,8 @@ star-shaped-aura:
     radius: 7.50
     list:
       - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: star
     radius: 1.25
@@ -89,6 +96,8 @@ circle-shaped-aura:
     radius: 7.50
     list:
       - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: circle
     radius: 1.25
@@ -111,6 +120,8 @@ whirl-shaped-aura:
     radius: 7.50
     list:
       - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
   appearance:
     type: whirl
     radius: 1.25
@@ -125,4 +136,4 @@ whirl-shaped-aura:
     growth-settings:
       enabled: true
       seconds-between-particles: 0.05
-      num-particles-at-a-time: 1
+      num-particles-at-a-time: 5

@@ -1,6 +1,6 @@
 name: UltimateAuraPro
 version: 1.0
-author: iSayCr4pAlot
+author: dandrew7
 main: me.dandrew.ultimateaurapro.UltimateAuraProPlugin
 api-version: 1.13
 softdepend: [Citizens]

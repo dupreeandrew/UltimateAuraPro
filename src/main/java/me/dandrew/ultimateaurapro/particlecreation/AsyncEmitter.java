@@ -26,7 +26,7 @@ public class AsyncEmitter {
     private List<Color> colors;
     private AtomicInteger nextColorIndex = new AtomicInteger(0);
     private int particleThickness;
-    private int numGrowthParticlesAtATime;
+    private int numGrowthIterationsAtATime;
     private int millisBetweenGrowthParticles;
 
     public static ScheduledExecutorService executorService = UltimateAuraProPlugin.executorService;
@@ -52,7 +52,7 @@ public class AsyncEmitter {
         this(colors, particleThickness, .05, 3);
     }
 
-    public AsyncEmitter(List<Color> colors, int particleThickness, double secondsBetweenGrowthParticles, int numGrowthParticlesAtATime) {
+    public AsyncEmitter(List<Color> colors, int particleThickness, double secondsBetweenGrowthParticles, int numGrowthIterationsAtATime) {
 
         if (secondsBetweenGrowthParticles <= 0) {
             secondsBetweenGrowthParticles = .05;
@@ -61,7 +61,7 @@ public class AsyncEmitter {
         this.colors = new ArrayList<>(colors);
         this.millisBetweenGrowthParticles = (int) (secondsBetweenGrowthParticles * 1000.00);
         this.particleThickness = particleThickness;
-        this.numGrowthParticlesAtATime = numGrowthParticlesAtATime;
+        this.numGrowthIterationsAtATime = numGrowthIterationsAtATime;
 
     }
 
@@ -102,7 +102,6 @@ public class AsyncEmitter {
 
     public GrowthTask growParticles(GrowthListener growthListener, Queue<Vector> particleOffsets,
                                     boolean trackYaw, boolean clone) {
-        particleOffsets = LocationUtil.cloneOffsets(particleOffsets);
         Iterable<Vector> submittableParticleOffsets = getSubmittableParticleOffsets(particleOffsets, clone);
         Iterator<Vector> iterator = submittableParticleOffsets.iterator();
         return startGrowthClock(growthListener, iterator, trackYaw);
@@ -111,7 +110,7 @@ public class AsyncEmitter {
     private GrowthTask startGrowthClock(GrowthListener growthListener, Iterator iterator, boolean trackYaw) {
         ObjectContainer<ScheduledFuture> scheduledFutureContainer = new ObjectContainer<>();
         ScheduledFuture<?> scheduledFuture = executorService.scheduleAtFixedRate(() -> {
-            if (emitNextParticles(growthListener, iterator, trackYaw)) {
+            if (!emitNextParticles(growthListener, iterator, trackYaw)) {
                 scheduledFutureContainer.getObject().cancel(false);
                 growthListener.onFinish();
             }
@@ -121,27 +120,31 @@ public class AsyncEmitter {
     }
 
     /**
-     * Emits the next set of particles (wrt numGrowthParticlesAtATime) returned by the iterator
+     * Emits the next set of particles (wrt numGrowthIterationsAtATime) returned by the iterator
      * Calculations & particle emission are async
-     * @return true if there are no more particles
+     * @return true if there are more particles to emit
      * @param iterator Object must be either a vector or collection of vectors.
      */
     private boolean emitNextParticles(GrowthListener growthListener, Iterator iterator, boolean adjustWithYaw) {
         // This should not be multithreaded to ensure the return value is accurate
         List<Vector> offsetBuffer = getBuffer(iterator);
-        if (offsetBuffer.size() > 0) {
-            asyncProcessOffsetBuffer(growthListener, offsetBuffer, adjustWithYaw);
-            return false;
+        if (offsetBuffer.size() > 0 && offsetBuffer.size() < 5) {
+            processOffsetBuffer(growthListener, offsetBuffer, adjustWithYaw);
+            return true;
+        }
+        else if (offsetBuffer.size() >= 5) {
+            executorService.submit(() -> processOffsetBuffer(growthListener, offsetBuffer, adjustWithYaw));
+            return true;
         }
         else {
-            return true;
+            return false;
         }
 
     }
 
     private List<Vector> getBuffer(Iterator iterator) {
         List<Vector> particleOffsetBuffer = new ArrayList<>();
-        for (int i = 0; i < numGrowthParticlesAtATime; i++) {
+        for (int i = 0; i < numGrowthIterationsAtATime; i++) {
             addParticleOffsetsFromNextIteration(iterator, particleOffsetBuffer);
             if (!iterator.hasNext()) {
                 break;
@@ -161,16 +164,14 @@ public class AsyncEmitter {
         }
     }
 
-    private void asyncProcessOffsetBuffer(GrowthListener growthListener, Iterable<Vector> particleOffsetBuffer, boolean adjustWithYaw) {
-        executorService.submit(() -> {
-            Location centralLocation = growthListener.getSynchronizedCentralLocation();
-            List<Location> particleLocations = new ArrayList<>();
-            for (Vector particleOffset : particleOffsetBuffer) {
-                Location particleLocation = getParticleLocation(centralLocation, particleOffset, adjustWithYaw);
-                particleLocations.add(particleLocation);
-            }
-            emitParticlesOnCurrentThread(particleLocations);
-        });
+    private void processOffsetBuffer(GrowthListener growthListener, Iterable<Vector> particleOffsetBuffer, boolean adjustWithYaw) {
+        Location centralLocation = growthListener.getSynchronizedCentralLocation();
+        List<Location> particleLocations = new ArrayList<>();
+        for (Vector particleOffset : particleOffsetBuffer) {
+            Location particleLocation = getParticleLocation(centralLocation, particleOffset, adjustWithYaw);
+            particleLocations.add(particleLocation);
+        }
+        emitParticlesOnCurrentThread(particleLocations);
     }
 
     private static Location getParticleLocation(Location centralLocation, Vector particleOffset, boolean adjustWithYaw) {
@@ -210,13 +211,12 @@ public class AsyncEmitter {
         executorService.schedule(() -> {
             cachedTrigValuesMap.remove(yaw);
         }, 3, TimeUnit.SECONDS);
-        // Debug.send("Added 3 second expiration to yaw: " + cachedTrigValuesMap.size() + "/ 1250");
     }
 
-    public GrowthTask growParticleCollections(GrowthListener growthListener, Queue<Collection<Vector>> setsOfOffsets,
+    public GrowthTask growParticleCollections(GrowthListener growthListener, Queue<Iterable<Vector>> setsOfOffsets,
                                         boolean trackYaw, boolean clone) {
         setsOfOffsets = clone ? LocationUtil.cloneSetsOfOffsets(setsOfOffsets) : setsOfOffsets;
-        Iterator<Collection<Vector>> iterator = setsOfOffsets.iterator();
+        Iterator<Iterable<Vector>> iterator = setsOfOffsets.iterator();
         return startGrowthClock(growthListener, iterator, trackYaw);
     }
 

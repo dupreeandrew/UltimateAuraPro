@@ -5,6 +5,10 @@ import me.dandrew.ultimateaurapro.auragiving.AuraInfo;
 import me.dandrew.ultimateaurapro.auragiving.AuraTracker;
 import me.dandrew.ultimateaurapro.config.AuraConfig;
 import me.dandrew.ultimateaurapro.config.InstalledAura;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -53,15 +57,20 @@ public class BaseCommand {
             return;
         }
 
+
+
         String playerName = cmdSender.getName();
         AuraInfo auraInfo = installedAura.getAuraInfo();
         if (AuraTracker.hasAuraInfo(playerName, auraInfo)) {
-            cmdSender.sendMessage(ChatColor.GREEN + "Aura removed!");
             AuraTracker.removeAuraInfoForPlayer(playerName, auraInfo);
+            sendHelp();
+            cmdSender.sendMessage(ChatColor.GREEN + "Aura removed!");
+
         }
         else {
-            cmdSender.sendMessage(ChatColor.GREEN + "Aura activated!");
             AuraTracker.giveAura(playerName, auraInfo);
+            sendHelp();
+            cmdSender.sendMessage(ChatColor.GREEN + "Aura activated!");
         }
 
     }
@@ -69,7 +78,7 @@ public class BaseCommand {
     private void handleAdmin() {
 
         if (!cmdSender.hasPermission(UltimateAuraProPermissions.ADMIN_NODE)) {
-            cmdSender.sendMessage(ChatColor.RED + "You can't use this command");
+            cmdSender.sendMessage(ChatColor.RED + "You can't use this command.");
             return;
         }
 
@@ -91,12 +100,30 @@ public class BaseCommand {
             }
         }
 
-        for (InstalledAura allowedAura : allowedAuras) {
-            String onOffPrefix = getOnOffPrefix(allowedAura.getAuraInfo());
-            String helpLine = onOffPrefix + "&6/aura " + allowedAura.getName() + " : &7" + allowedAura.getDescription();
-            String coloredLine = ChatColor.translateAlternateColorCodes('&', helpLine);
-            cmdSender.sendMessage(coloredLine);
+        if (allowedAuras.size() > 0) {
+            for (InstalledAura allowedAura : allowedAuras) {
+                sendHelpLine(allowedAura);
+            }
         }
+        else {
+            cmdSender.sendMessage(ChatColor.YELLOW + "You do not have any auras yet.");
+        }
+
+    }
+
+    private void sendHelpLine(InstalledAura installedAura) {
+        String onOffPrefix = getOnOffPrefix(installedAura.getAuraInfo());
+        String rawMsg = onOffPrefix + "&6/aura " + installedAura.getName() + " : &7" + installedAura.getDescription();
+        String coloredLine = ChatColor.translateAlternateColorCodes('&', rawMsg);
+
+        BaseComponent[] coloredLineComponents = TextComponent.fromLegacyText(coloredLine);
+
+        BaseComponent[] baseComponents = new ComponentBuilder("")
+                .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/aura " + installedAura.getName()))
+                .append(coloredLineComponents)
+                .create();
+        cmdSender.spigot().sendMessage(baseComponents);
+
 
     }
 

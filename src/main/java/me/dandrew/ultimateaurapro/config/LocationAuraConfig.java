@@ -17,62 +17,62 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public enum PermanentAuraConfig {
+public enum LocationAuraConfig {
 
     INSTANCE;
 
-    private File permanentAurasFile;
+    private File locationAurasFile;
     private FileConfiguration config;
 
-    private Map<String, AssignedAura> runningPermanentAuras = new HashMap<>();
+    private Map<String, AssignedAura> runningLocationAuras = new HashMap<>();
 
-    public void loadBaseFile(File permanentAurasFile) {
+    public void loadBaseFile(File locationAurasFile) {
 
-        if (this.permanentAurasFile == null) {
+        if (this.locationAurasFile == null) {
             UltimateAuraProPlugin.addReloadListener(this::reload);
         }
-        this.permanentAurasFile = permanentAurasFile;
+        this.locationAurasFile = locationAurasFile;
         reload();
 
     }
 
     public void reload() {
-        this.config = YamlConfiguration.loadConfiguration(permanentAurasFile);
-        reInitPermanentAurasFromConfig();
+        this.config = YamlConfiguration.loadConfiguration(locationAurasFile);
+        reInitLocationAurasFromConfig();
     }
 
-    private void reInitPermanentAurasFromConfig() {
+    private void reInitLocationAurasFromConfig() {
 
-        for (AssignedAura runningPermanentAura : runningPermanentAuras.values()) {
-            runningPermanentAura.deactivate();
+        for (AssignedAura runningLocationAura : runningLocationAuras.values()) {
+            runningLocationAura.deactivate();
         }
 
-        runningPermanentAuras.clear();
+        runningLocationAuras.clear();
 
-        for (PermanentAura permanentAura : getPermanentAuras()) {
-            createRunningPermanentAura(permanentAura);
+        for (LocationAura locationAura : getLocationAuras()) {
+            createRunningLocationAura(locationAura);
         }
 
     }
 
-    private void createRunningPermanentAura(PermanentAura permanentAura) {
-        Location location = permanentAura.location;
-        AuraInfo auraInfo = permanentAura.installedAura.getAuraInfo();
-        AssignedAura runningPermanentAura = AssignedAura.activate(location, auraInfo);
-        runningPermanentAuras.put(permanentAura.id, runningPermanentAura);
+    private void createRunningLocationAura(LocationAura locationAura) {
+        Location location = locationAura.location;
+        AuraInfo auraInfo = locationAura.installedAura.getAuraInfo();
+        AssignedAura runningLocationAura = AssignedAura.activate(location, auraInfo);
+        runningLocationAuras.put(locationAura.id, runningLocationAura);
     }
 
-    public List<PermanentAura> getPermanentAuras() {
-        List<PermanentAura> permanentAuras = new ArrayList<>();
-        Map<String, Object> permanentLocationDetails = config.getValues(false);
-        for (Map.Entry<String, Object> entry : permanentLocationDetails.entrySet()) {
-            PermanentAura permanentAura = getPermanentAura(entry);
-            permanentAuras.add(permanentAura);
+    public List<LocationAura> getLocationAuras() {
+        List<LocationAura> locationAuras = new ArrayList<>();
+        Map<String, Object> locationLocationDetails = config.getValues(false);
+        for (Map.Entry<String, Object> entry : locationLocationDetails.entrySet()) {
+            LocationAura locationAura = getLocationAura(entry);
+            locationAuras.add(locationAura);
         }
-        return permanentAuras;
+        return locationAuras;
     }
 
-    private static PermanentAura getPermanentAura(Map.Entry<String, Object> entry) {
+    private static LocationAura getLocationAura(Map.Entry<String, Object> entry) {
 
         String id = entry.getKey();
         ConfigurationSection properties = (ConfigurationSection) entry.getValue();
@@ -104,41 +104,41 @@ public enum PermanentAuraConfig {
         double z = properties.getDouble("z");
 
 
-        Location permanentLocation = new Location(world, x, y, z);
-        return new PermanentAura(id, installedAura, permanentLocation);
+        Location locationLocation = new Location(world, x, y, z);
+        return new LocationAura(id, installedAura, locationLocation);
 
     }
 
     private static void throwConfigError(String id, String msg) {
-        throw new IllegalArgumentException("Error for permanent-auras.yml under '" + id + "': " + msg);
+        throw new IllegalArgumentException("Error for location-auras.yml under '" + id + "': " + msg);
     }
 
     /**
      * Returns true on success.
      * Returns false if the aura name was not found or the id already exists.
      */
-    public boolean addPermanentAura(PermanentAura permanentAura) {
+    public boolean addLocationAura(LocationAura locationAura) {
 
-        if (AuraConfig.INSTANCE.getInstalledAura(permanentAura.installedAura.getName()) == null) {
+        if (AuraConfig.INSTANCE.getInstalledAura(locationAura.installedAura.getName()) == null) {
             return false;
         }
 
-        if (config.isSet(permanentAura.id)) {
+        if (config.isSet(locationAura.id)) {
             return false;
         }
 
-        createRunningPermanentAura(permanentAura);
-        writePermanentAuraToConfig(permanentAura);
+        createRunningLocationAura(locationAura);
+        writeLocationAuraToConfig(locationAura);
 
         return true;
 
     }
 
-    private void writePermanentAuraToConfig(PermanentAura permanentAura) {
-        ConfigurationSection section = config.createSection(permanentAura.id);
-        section.set("aura-name", permanentAura.installedAura.getName());
+    private void writeLocationAuraToConfig(LocationAura locationAura) {
+        ConfigurationSection section = config.createSection(locationAura.id);
+        section.set("aura-name", locationAura.installedAura.getName());
 
-        Location location = permanentAura.location;
+        Location location = locationAura.location;
         section.set("world", location.getWorld().getName());
         section.set("x", location.getX());
         section.set("y", location.getY());
@@ -149,7 +149,7 @@ public enum PermanentAuraConfig {
 
     private boolean save() {
         try {
-            config.save(permanentAurasFile);
+            config.save(locationAurasFile);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -157,13 +157,13 @@ public enum PermanentAuraConfig {
         }
     }
 
-    public boolean deletePermanentAura(String id) {
+    public boolean deleteLocationAura(String id) {
         boolean auraExists = config.isSet(id);
         if (!auraExists) {
             return false;
         }
 
-        AssignedAura assignedAura = runningPermanentAuras.get(id);
+        AssignedAura assignedAura = runningLocationAuras.get(id);
         if (assignedAura != null) {
             assignedAura.deactivate();
         }
@@ -174,13 +174,13 @@ public enum PermanentAuraConfig {
 
     }
 
-    public static class PermanentAura {
+    public static class LocationAura {
 
         private String id;
         private InstalledAura installedAura;
         private Location location;
 
-        public PermanentAura(String id, InstalledAura installedAura, Location location) {
+        public LocationAura(String id, InstalledAura installedAura, Location location) {
             this.id = id;
             this.installedAura = installedAura;
             this.location = location;

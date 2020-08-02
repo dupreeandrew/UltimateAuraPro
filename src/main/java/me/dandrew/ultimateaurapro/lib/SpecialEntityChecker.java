@@ -7,14 +7,21 @@ import org.bukkit.entity.Entity;
 
 public class SpecialEntityChecker {
 
+    private static boolean didCheckCitizenApiAlready = false;
+    private static boolean citizenApiInstalled = false;
+
     public static boolean checkGeneralNPC(Entity entity) {
         return entity.hasMetadata("NPC");
     }
 
     public static boolean checkInvulnerableCitizenNPC(Entity entity) {
 
-        boolean apiIsAvailable = UltimateAuraProPlugin.softDependIsInstalled("Citizens");
-        if (!apiIsAvailable) {
+        if (!didCheckCitizenApiAlready) {
+            didCheckCitizenApiAlready = true;
+            citizenApiInstalled = UltimateAuraProPlugin.softDependIsInstalled("Citizens");
+        }
+
+        if (!citizenApiInstalled) {
             return false;
         }
 
@@ -29,6 +36,10 @@ public class SpecialEntityChecker {
 
     public static boolean checkShopkeeper(Entity entity) {
         return entity.hasMetadata("shopkeeper");
+    }
+
+    public static boolean checkShouldIgnore(Entity entity) {
+        return entity.isInvulnerable() || checkInvulnerableCitizenNPC(entity) || checkShopkeeper(entity);
     }
 
 }

@@ -7,10 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="AuraPro" />
+        <module name="UltimateAuraPro" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="AuraPro" target="1.8" />
+      <module name="UltimateAuraPro" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

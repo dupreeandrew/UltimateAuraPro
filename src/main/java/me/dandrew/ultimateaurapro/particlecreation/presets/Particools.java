@@ -13,6 +13,8 @@ import me.dandrew.ultimateaurapro.particlecreation.AsyncEmitter;
 import me.dandrew.ultimateaurapro.util.LocationUtil;
 import me.dandrew.ultimateaurapro.util.TaskRepeater;
 import me.dandrew.ultimateaurapro.util.TickConverter;
+import me.dandrew.ultimateaurapro.util.math.DifferentiableFunction;
+import me.dandrew.ultimateaurapro.util.math.NewtonRaphson;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Projectile;
@@ -255,100 +257,100 @@ public class Particools {
 
     private Queue<Vector> getWhirlOffsets(double radius, int whirlPieces) {
 
-
         // r = polarEqMultiplier * theta
 
         double polarEqMultiplier = 1; // basically determines the curvature of the whirl. lower = more curve.
         double finalTheta = radius / polarEqMultiplier; // this ensures that the radius is preserved at end of whirl piece
 
-        double whirlPieceArcLength = calculateWhirlPieceAntiderivativeAtTheta(polarEqMultiplier, finalTheta);
+        double whirlPieceArcLength = calculateWhirlArcLengthFromZero(polarEqMultiplier, finalTheta);
         double distanceBetweenParticles = getAdjustedSpaceBetweenParticles(whirlPieceArcLength);
 
 
-        List<List<Vector>> whirlPieceOffsetList = new ArrayList<>();
-        for (int whirlPieceNumber = 0; whirlPieceNumber < whirlPieces; whirlPieceNumber++) {
-            whirlPieceOffsetList.add(new ArrayList<>());
-        }
 
-        Vector previousOffset = new Vector(0, 0 ,0);
-        double currentArcLength = 0.00;
-
-        /*
-        Generally, what's being done below is we keep finding the radius of points on the bounded polar curve every .125 degrees.
-        The distance between each point is calculated, estimating arc length covered (currentArcLength)
-        Once currentArcLength reaches distanceBetweenParticles, this is where a particle will spawn.
-        currentArcLength is then reset to zero to begin a new arc length approximation.
-
-        Once theta reaches final theta, the particle's radius should ideally be as far as given radius parameter (but never greater)
-        This works because of the way distanceBetweenParticles was calculated & and as radius increases, theta increases.
-        Also, a particle will, no matter what, spawn at final theta, regardless of how accurate each arc length segment is.
-         */
-        final double EIGHTH_DEGREE_IN_RADS = Math.PI / 1440.00; // higher denominator = higher accuracy
-        boolean finalThetaPointCalculated = false;
-
-        for (double theta = 0.00; isLessThanOrEqualTo(theta, finalTheta); theta += EIGHTH_DEGREE_IN_RADS) {
-
-            double currentRadius = polarEqMultiplier * theta;
-            double tinyArcLength = Math.abs(currentRadius - previousOffset.length());
-            currentArcLength += tinyArcLength;
-
-            double deltaX = currentRadius * Math.sin(theta);
-            double deltaZ = currentRadius * Math.cos(theta);
-            previousOffset = new Vector(deltaX, 0, deltaZ);
-
-            if (currentArcLength >= distanceBetweenParticles) {
-                // This offset will be added.
-
-                for (int whirlPieceNumber = 0; whirlPieceNumber < whirlPieces; whirlPieceNumber++) {
-                    List<Vector> whirlPieceNumberOffsets = whirlPieceOffsetList.get(whirlPieceNumber);
-
-                    if (whirlPieceNumber == 0) {
-                        whirlPieceNumberOffsets.add(previousOffset);
-                    }
-                    else {
-                        double deltaThetaPerPieceNumber = Math.PI * 2.00 / whirlPieces * 1.00;
-                        double thetaOffset = deltaThetaPerPieceNumber * whirlPieceNumber;
-                        double rotatedDeltaX = currentRadius * Math.sin(theta + thetaOffset);
-                        double rotatedDeltaZ = currentRadius * Math.cos(theta + thetaOffset);
-                        Vector rotatedOffset = new Vector(rotatedDeltaX, 0, rotatedDeltaZ);
-                        whirlPieceNumberOffsets.add(rotatedOffset);
-                    }
-
-                }
-
-                currentArcLength = 0.00;
-
-            }
-
-
-            if (finalThetaPointCalculated) {
-                break;
-            }
-
-            // This will ensure the radius is met.
-            if ((theta + EIGHTH_DEGREE_IN_RADS > finalTheta)) {
-                theta = (finalTheta - EIGHTH_DEGREE_IN_RADS - .000001);
-                finalThetaPointCalculated = true;
-            }
-
-        }
 
         Queue<Vector> particleOffsets = new LinkedList<>();
-        for (int whirlPieceNumber = 0; whirlPieceNumber < whirlPieces; whirlPieceNumber++) {
-            List<Vector> whirlPieceNumberOffsets = whirlPieceOffsetList.get(whirlPieceNumber);
-            particleOffsets.addAll(whirlPieceNumberOffsets);
+        particleOffsets.add(new Vector(0, 0 ,0));
+
+        double currentTheta = getNextUpperBound(polarEqMultiplier, distanceBetweenParticles, 0, finalTheta);
+        boolean lastIteration = false;
+        while (!lastIteration) {
+
+            if (finalTheta - currentTheta < 0.0001 || currentTheta > finalTheta) {
+                currentTheta = finalTheta;
+                lastIteration = true;
+            }
+
+            double currentRadius = polarEqMultiplier * currentTheta;
+
+            double deltaX = currentRadius * Math.sin(currentTheta);
+            double deltaZ = currentRadius * Math.cos(currentTheta);
+            Vector offset = new Vector(deltaX, 0, deltaZ);
+
+            for (int whirlPieceNumber = 0; whirlPieceNumber < whirlPieces; whirlPieceNumber++) {
+
+                if (whirlPieceNumber == 0) {
+                    particleOffsets.add(offset);
+                }
+                else {
+                    double deltaThetaPerPieceNumber = Math.PI * 2.00 / whirlPieces * 1.00;
+                    double thetaOffset = deltaThetaPerPieceNumber * whirlPieceNumber;
+                    double rotatedDeltaX = currentRadius * Math.sin(currentTheta + thetaOffset);
+                    double rotatedDeltaZ = currentRadius * Math.cos(currentTheta + thetaOffset);
+                    Vector rotatedOffset = new Vector(rotatedDeltaX, 0, rotatedDeltaZ);
+                    particleOffsets.add(rotatedOffset);
+                }
+
+            }
+
+            currentTheta = getNextUpperBound(polarEqMultiplier, distanceBetweenParticles, currentTheta, finalTheta);
+
         }
+
         return particleOffsets;
 
     }
 
-    private double calculateWhirlPieceAntiderivativeAtTheta(double polarEqMultiplier, double theta) {
-        return ((polarEqMultiplier / 2.00) * (
-                Math.log( Math.abs( Math.sqrt( Math.pow(theta, 2) + 1.00 ) + theta ) )
-                        + ( theta * Math.sqrt( Math.pow(theta, 2) + 1.00 ) )
-        ));
+    private double calculateWhirlArcLengthFromZero(double polarEqMultiplier, double theta) {
+        return (polarEqMultiplier / 2.00) * calculateWhirlArcLengthAntiderivativeInnerBracket(theta);
     }
 
+    private double calculateWhirlArcLengthAntiderivativeInnerBracket(double theta) {
+        double duplicateValue = Math.sqrt( (theta * theta) + 1.00 );
+        return Math.log( Math.abs( duplicateValue + theta ) )
+                + ( theta * duplicateValue );
+    }
+
+    private double getNextUpperBound(double polarEqMultiplier, double desiredArcLength, double lowerBound, double finalTheta) {
+
+        /*
+            Basically, we're solving for the root, or the upper bound.
+            We use the arc length formula through integration for polar curves
+            Next, the fundamental theorem of calculus is used, with the answer being set to desiredArcLength.
+            Finally, the equation is rearranged to make it so the unknown upper bound is a root.
+            I believe the root can only be solved using numerical methods.
+            The Newton Raphson Method would be a good candidate since the
+            resulting equations "sort of" looks like a line.
+         */
+
+
+        double firstTerm = 2.00 * desiredArcLength / polarEqMultiplier;
+        double innerBracketAtLowerBound = calculateWhirlArcLengthAntiderivativeInnerBracket(lowerBound);
+        double allTheKnowns = firstTerm + innerBracketAtLowerBound;
+        DifferentiableFunction function = new DifferentiableFunction() {
+            @Override
+            public double getBase(double theta) {
+                return calculateWhirlArcLengthAntiderivativeInnerBracket(theta) - allTheKnowns;
+            }
+
+            @Override
+            public double getDerivative(double theta) {
+                return 2 * Math.sqrt((theta * theta) + 1.00);
+            }
+        };
+
+        return NewtonRaphson.solve(function, finalTheta + 0.01);
+
+    }
 
     public static class Builder {
 
@@ -407,7 +409,7 @@ public class Particools {
 
             doSafetyCheck();
 
-            
+
             List<Color> colors = getColorList(colorFrequencyMap);
             AsyncEmitter emitter = new AsyncEmitter(colors, particleThickness, secondsBetweenGrowthParticles, particlesPerTick);
             return new Particools(emitter, spacingBetweenParticles);

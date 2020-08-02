@@ -5,7 +5,7 @@ import me.dandrew.ultimateaurapro.auragiving.AuraTracker;
 import me.dandrew.ultimateaurapro.auragiving.AuraWand;
 import me.dandrew.ultimateaurapro.command.BaseCommand;
 import me.dandrew.ultimateaurapro.config.AuraConfig;
-import me.dandrew.ultimateaurapro.config.PermanentAuraConfig;
+import me.dandrew.ultimateaurapro.config.LocationAuraConfig;
 import me.dandrew.ultimateaurapro.particlecreation.presets.Particools;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -47,8 +47,8 @@ public class UltimateAuraProPlugin extends JavaPlugin {
         File aurasFile = files[0];
         AuraConfig.INSTANCE.loadBaseFile(aurasFile);
 
-        File permanentAurasFile = files[3];
-        PermanentAuraConfig.INSTANCE.loadBaseFile(permanentAurasFile);
+        File locationAurasFile = files[3];
+        LocationAuraConfig.INSTANCE.loadBaseFile(locationAurasFile);
     }
 
     public static File[] ensureFilesAreCreated() {
@@ -56,7 +56,7 @@ public class UltimateAuraProPlugin extends JavaPlugin {
                 new File(plugin.getDataFolder(), "auras.yml"),
                 new File(plugin.getDataFolder(), "help.txt"),
                 new File(plugin.getDataFolder(), "templates.yml"),
-                new File(plugin.getDataFolder(), "permanent-auras.yml")
+                new File(plugin.getDataFolder(), "location-auras.yml")
         };
 
         for (File file : files) {
@@ -74,8 +74,6 @@ public class UltimateAuraProPlugin extends JavaPlugin {
             reloadListener.onReload();
         }
     }
-
-
 
     @Override
     public void onDisable() {

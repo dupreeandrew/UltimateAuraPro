@@ -3,7 +3,7 @@ package me.dandrew.ultimateaurapro.command;
 import me.dandrew.ultimateaurapro.UltimateAuraProPlugin;
 import me.dandrew.ultimateaurapro.config.AuraConfig;
 import me.dandrew.ultimateaurapro.config.InstalledAura;
-import me.dandrew.ultimateaurapro.config.PermanentAuraConfig;
+import me.dandrew.ultimateaurapro.config.LocationAuraConfig;
 import me.dandrew.ultimateaurapro.util.ItemDb;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,18 +23,38 @@ class AdminCommand {
     AdminCommand(CommandSender cmdSender, String[] args) {
         this.cmdSender = cmdSender;
         this.args = args;
-        useGoodArgs();
+        this.args = Arrays.copyOfRange(args, 1, args.length);
     }
 
-    private void useGoodArgs() {
-        //                   0      1
-        // ex: /ultimateaurapro admin reload
-        if (args.length < 2) {
+    void execute() {
+
+        if (args.length == 0) {
             sendAdminHelp();
             return;
         }
 
-        args = Arrays.copyOfRange(args, 1, args.length);
+        switch (args[0]) {
+            default:
+                sendAdminHelp();
+                cmdSender.sendMessage(ChatColor.YELLOW + "That argument was not recognized.");
+                break;
+            case "reload":
+                UltimateAuraProPlugin.reloadSettings();
+                cmdSender.sendMessage(ChatColor.GREEN + "Plugin was reloaded!");
+                break;
+            case "ladd":
+                handleAddArg();
+                break;
+            case "ldelete":
+                handleDeleteArg();
+                break;
+            case "llist":
+                handleListArg();
+                break;
+            case "wand":
+                handleWand();
+                break;
+        }
     }
 
     private void sendAdminHelp() {
@@ -42,10 +62,10 @@ class AdminCommand {
                 "&a",
                 "&8 = &cUltimate&3Aura&aPro: &eAdmin Help &8= ",
                 "&6/aura admin reload &7- reload all configuration files",
-                "&6/aura admin padd &e<id> <aura name>&7 - add a permanent aura at where you're standing",
-                "&6/aura admin pdelete &e<id>&7 - delete a permanent aura given its id",
-                "&6/aura admin plist&7 - list ids of all permanent auras, along with their location details",
-                "&6/aura admin wand &e<player>&7 - get an aura wand for auras using 'wand' or 'wand-self'",
+                "&6/aura admin ladd &e<id> <aura name>&7 - add a location aura at where you're standing",
+                "&6/aura admin ldelete &e<id>&7 - delete a location aura given its id",
+                "&6/aura admin llist&7 - list ids of all location auras, along with their location details",
+                "&6/aura admin wand &e[player]&7 - get an aura wand for auras using 'wand' or 'wand-self'",
                 "&a"
         };
 
@@ -54,27 +74,6 @@ class AdminCommand {
             cmdSender.sendMessage(coloredLine);
         }
 
-    }
-
-    public void execute() {
-        switch (args[0]) {
-            case "reload":
-                UltimateAuraProPlugin.reloadSettings();
-                cmdSender.sendMessage(ChatColor.GREEN + "Plugin was reloaded!");
-                break;
-            case "padd":
-                handleAddArg();
-                break;
-            case "pdelete":
-                handleDeleteArg();
-                break;
-            case "plist":
-                handleListArg();
-                break;
-            case "wand":
-                handleWand();
-                break;
-        }
     }
 
 
@@ -98,10 +97,10 @@ class AdminCommand {
             return;
         }
 
-        PermanentAuraConfig.PermanentAura permanentAura
-                = new PermanentAuraConfig.PermanentAura(id, installedAura, ((Player)(cmdSender)).getLocation());
+        LocationAuraConfig.LocationAura locationAura
+                = new LocationAuraConfig.LocationAura(id, installedAura, ((Player)(cmdSender)).getLocation());
 
-        boolean success = PermanentAuraConfig.INSTANCE.addPermanentAura(permanentAura);
+        boolean success = LocationAuraConfig.INSTANCE.addLocationAura(locationAura);
         if (success) {
             cmdSender.sendMessage(ChatColor.GREEN + "Aura was added!");
         }
@@ -128,27 +127,27 @@ class AdminCommand {
 
         String id = args[1];
 
-        boolean success = PermanentAuraConfig.INSTANCE.deletePermanentAura(id);
+        boolean success = LocationAuraConfig.INSTANCE.deleteLocationAura(id);
         if (success) {
-            cmdSender.sendMessage(ChatColor.GREEN + "Permanent Aura was deleted.");
+            cmdSender.sendMessage(ChatColor.GREEN + "Location Aura was deleted.");
         }
         else {
-            cmdSender.sendMessage(ChatColor.RED + "That permanent aura was not found.");
+            cmdSender.sendMessage(ChatColor.RED + "That location aura was not found.");
         }
 
     }
 
     private void handleListArg() {
         List<String> messages = new ArrayList<>();
-        messages.add("&3&lInstalled Permanent Auras:");
+        messages.add("&3&lInstalled Location Auras:");
 
-        for (PermanentAuraConfig.PermanentAura permanentAura : PermanentAuraConfig.INSTANCE.getPermanentAuras()) {
-            Location location = permanentAura.getLocation();
+        for (LocationAuraConfig.LocationAura locationAura : LocationAuraConfig.INSTANCE.getLocationAuras()) {
+            Location location = locationAura.getLocation();
             String xString = String.format("%.3f", location.getX());
             String yString = String.format("%.3f", location.getY());
             String zString = String.format("%.3f", location.getZ());
 
-            String msg = "&6" + permanentAura.getId() + " @ &a" + location.getWorld().getName()
+            String msg = "&6" + locationAura.getId() + " @ &a" + location.getWorld().getName()
                     + ".&6 x: &7" + xString + ", &6y: &7" + yString + ", &6z: &7" + zString;
             messages.add(msg);
         }

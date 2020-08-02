@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AuraPro.iml" filepath="$PROJECT_DIR$/AuraPro.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UltimateAuraPro.iml" filepath="$PROJECT_DIR$/UltimateAuraPro.iml" />
     </modules>
   </component>
 </project>

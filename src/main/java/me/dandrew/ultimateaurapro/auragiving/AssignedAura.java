@@ -1,6 +1,7 @@
 package me.dandrew.ultimateaurapro.auragiving;
 
 import me.dandrew.ultimateaurapro.UltimateAuraProPlugin;
+import me.dandrew.ultimateaurapro.lib.SpecialEntityChecker;
 import me.dandrew.ultimateaurapro.particlecreation.GrowthListener;
 import me.dandrew.ultimateaurapro.particlecreation.GrowthTask;
 import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
@@ -15,81 +16,97 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class AssignedAura {
 
+    private static Set<AssignedAura> assignedAuras = new HashSet<>();
+
     private @Nullable String playerName;
     private @Nullable Location permanentLocation;
+
     private AuraInfo auraInfo;
     private ScheduledFuture particleTask;
     private BukkitTask effectsTask;
-    private static Set<GrowthTask> activeGrowthTasks = new HashSet<>();
-    private static Set<AssignedAura> assignedAuras = new HashSet<>();
+    private Set<BukkitTask> playerCommandEffectTasks = new HashSet<>();
+
+    private Set<GrowthTask> activeGrowthTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
 
     private static Map<Integer, ShapeCreator> appropriateShapeCreatorMap
             = new HashMap<>(); // K: auraSettings.getId(), V: appropriate ShapeCreator
     private static List<ScheduledFuture> rotationClocks = new ArrayList<>();
     private static ScheduledExecutorService executorService = UltimateAuraProPlugin.executorService;
 
-    private AssignedAura(String playerName, AuraInfo auraInfo, @Nullable ScheduledFuture particleTask, @Nullable BukkitTask effectsTask) {
+    static AssignedAura activate(String playerName, AuraInfo auraInfo) {
+        return new AssignedAura(playerName, auraInfo);
+    }
+
+    private AssignedAura(String playerName, AuraInfo auraInfo) {
         this.playerName = playerName;
         this.auraInfo = auraInfo;
-        this.particleTask = particleTask;
-        this.effectsTask = effectsTask;
-        assignedAuras.add(this);
-    }
+        initAllEffects(playerName, auraInfo);
 
-    private AssignedAura(Location location, AuraInfo auraInfo, @Nullable ScheduledFuture particleTask, @Nullable BukkitTask effectsTask) {
-        this.auraInfo = auraInfo;
-        this.particleTask = particleTask;
-        this.effectsTask = effectsTask;
-        this.permanentLocation = location;
-        assignedAuras.add(this);
-    }
-
-    static AssignedAura activate(String playerName, AuraInfo auraInfo) {
-        BukkitTask effectsTask = getEffectsTask(playerName, auraInfo);
-        if (auraInfo.isEffectOnlyAura()) {
-            return new AssignedAura(playerName, auraInfo, null, effectsTask);
+        if (!auraInfo.isEffectOnlyAura()) {
+            this.particleTask = getParticlesTask(getLocationCallbackFromPlayerName(playerName), auraInfo);
         }
 
-        ScheduledFuture particlesTask = getParticlesTask(getLocationCallbackFromPlayerName(playerName), auraInfo);
-        return new AssignedAura(playerName, auraInfo, particlesTask, effectsTask);
-    }
-
-    private static SynchronizedLocation getLocationCallbackFromPlayerName(String playerName) {
-        Player player = Bukkit.getPlayerExact(playerName);
-        if (player == null || !player.isValid()) {
-            return null;
-        }
-        return player::getLocation;
+        assignedAuras.add(this);
     }
 
     public static AssignedAura activate(Location location, AuraInfo auraInfo) {
-        BukkitTask effectsTask = getEffectsTask(location, auraInfo);
-        if (auraInfo.isEffectOnlyAura()) {
-            return new AssignedAura(location, auraInfo, null, effectsTask);
-        }
-
-        ScheduledFuture particlesTask = getParticlesTask(() -> location, auraInfo);
-        return new AssignedAura(location, auraInfo, particlesTask, effectsTask);
+        return new AssignedAura(location, auraInfo);
     }
 
-    private static @Nullable BukkitTask getEffectsTask(String playerName, AuraInfo auraInfo) {
+    private AssignedAura(Location location, AuraInfo auraInfo) {
+        this.permanentLocation = location;
+        this.auraInfo = auraInfo;
+        initAllEffects(location, auraInfo);
+
+        if (!auraInfo.isEffectOnlyAura()) {
+            this.particleTask = getParticlesTask(() -> location, auraInfo);
+        }
+
+        assignedAuras.add(this);
+    }
+
+
+    private static SynchronizedLocation getLocationCallbackFromPlayerName(String playerName) {
+
+        return () -> {
+
+            Player player = Bukkit.getPlayerExact(playerName);
+            if (player == null || !player.isValid()) {
+                return null;
+            }
+
+            if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                return null;
+            }
+
+            return player.getLocation();
+
+        };
+    }
+
+
+
+    private void initAllEffects(String playerName, AuraInfo auraInfo) {
         AuraEffect auraEffect = auraInfo.getAuraEffect();
 
         if (auraEffect.getAuraTarget() == AuraTarget.NONE) {
-            return null;
+            return;
         }
 
-        return TaskRepeater.runUntilCancel(new TaskRepeater.SelfCancellingTask() {
+        this.effectsTask = TaskRepeater.runUntilCancel(new TaskRepeater.SelfCancellingTask() {
             @Override
             public boolean onTick() {
 
@@ -102,51 +119,13 @@ public class AssignedAura {
                 return false;
 
             }
-        }, TickConverter.getTicksFromSeconds(2), Integer.MAX_VALUE);
-    }
+        }, TickConverter.getTicksFromSeconds(1.5), Integer.MAX_VALUE);
 
-    private static @Nullable BukkitTask getEffectsTask(Location location, AuraInfo auraInfo) {
-        AuraEffect auraEffect = auraInfo.getAuraEffect();
+        initPlayerCommandEffects(() -> {
+            Player player = Bukkit.getPlayerExact(playerName);
+            return getTargetEntities(player, auraEffect);
+        }, auraEffect);
 
-        if (auraEffect.getAuraTarget() == AuraTarget.NONE) {
-            return null;
-        }
-
-        return TaskRepeater.runUntilCancel(new TaskRepeater.SelfCancellingTask() {
-            @Override
-            public boolean onTick() {
-
-                Collection<Entity> nearbyEntities = location.getWorld()
-                        .getNearbyEntities(location, auraEffect.getRadius(), auraEffect.getRadius(), auraEffect.getRadius());
-
-                boolean hostilesOnly = auraEffect.getAuraTarget() == AuraTarget.HOSTILE;
-
-                Set<LivingEntity> candidateEntities = new HashSet<>();
-                for (Entity entity : nearbyEntities) {
-                    if (!(entity instanceof LivingEntity)) {
-                        continue;
-                    }
-
-                    if (hostilesOnly && !(entity instanceof Monster)) {
-                        continue;
-                    }
-
-                    if (auraEffect.getAuraTarget() == AuraTarget.NON_HOSTILE && entity instanceof Monster) {
-                        continue;
-                    }
-
-                    if (entity.getLocation().distance(location) <= auraEffect.getRadius()) {
-                        candidateEntities.add((LivingEntity) entity);
-                    }
-                }
-
-
-                buffEntities(auraEffect, candidateEntities);
-
-                return false;
-
-            }
-        }, TickConverter.getTicksFromSeconds(2), Integer.MAX_VALUE);
     }
 
     private static void buffTargetEntities(Player player, AuraEffect auraEffect) {
@@ -171,6 +150,7 @@ public class AssignedAura {
             case NONE:
                 return targetEntities;
             case SELF:
+            case NON_HOSTILE:
                 targetEntities.add(player);
                 return targetEntities;
             case WAND_SELF:
@@ -218,6 +198,10 @@ public class AssignedAura {
             return null;
         }
 
+        if (SpecialEntityChecker.checkShouldIgnore(possibleEntity)) {
+            return null;
+        }
+
         AuraTarget auraTarget = auraEffect.getAuraTarget();
         switch (auraTarget) {
             case ALL:
@@ -234,11 +218,109 @@ public class AssignedAura {
 
     }
 
-    private static ScheduledFuture getParticlesTask(SynchronizedLocation synchronizedLocation, AuraInfo auraInfo) {
+    private void initPlayerCommandEffects(CandidateEntities candidateEntities, AuraEffect auraEffect) {
+        for (AuraEffect.PlayerCommandEffect playerCommandEffect : auraEffect.getCommandEffectList()) {
+            BukkitTask task = TaskRepeater.runUntilCancel(new TaskRepeater.SelfCancellingTask() {
+                @Override
+                public boolean onTick() {
+
+                    Collection<LivingEntity> livingEntities = candidateEntities.get();
+                    if (livingEntities == null) {
+                        return true;
+                    }
+
+                    Collection<Player> players = getPlayers(livingEntities);
+                    runConsoleCommands(playerCommandEffect, players);
+
+                    return false;
+                }
+            }, playerCommandEffect.getTicksUntilRepeat(), playerCommandEffect.getTicksUntilRepeat(), Integer.MAX_VALUE);
+            playerCommandEffectTasks.add(task);
+        }
+    }
+
+    private void initAllEffects(Location location, AuraInfo auraInfo) {
+        AuraEffect auraEffect = auraInfo.getAuraEffect();
+
+        if (auraEffect.getAuraTarget() == AuraTarget.NONE) {
+            return;
+        }
+
+        this.effectsTask = TaskRepeater.runUntilCancel(new TaskRepeater.SelfCancellingTask() {
+            @Override
+            public boolean onTick() {
+                Collection<LivingEntity> candidateEntities = getCandidateEntities(location, auraEffect);
+                buffEntities(auraEffect, candidateEntities);
+                return false;
+
+            }
+        }, TickConverter.getTicksFromSeconds(1.5), Integer.MAX_VALUE);
+
+        initPlayerCommandEffects(() -> getCandidateEntities(location, auraEffect), auraEffect);
+
+    }
+
+
+    private Collection<LivingEntity> getCandidateEntities(Location location, AuraEffect auraEffect) {
+        Collection<Entity> nearbyEntities = location.getWorld()
+                .getNearbyEntities(location, auraEffect.getRadius(), auraEffect.getRadius(), auraEffect.getRadius());
+
+        boolean hostilesOnly = auraEffect.getAuraTarget() == AuraTarget.HOSTILE;
+
+        Set<LivingEntity> candidateEntities = new HashSet<>();
+        for (Entity entity : nearbyEntities) {
+            if (!(entity instanceof LivingEntity)) {
+                continue;
+            }
+
+            if (hostilesOnly && !(entity instanceof Monster)) {
+                continue;
+            }
+
+            if (auraEffect.getAuraTarget() == AuraTarget.NON_HOSTILE && entity instanceof Monster) {
+                continue;
+            }
+
+            if (SpecialEntityChecker.checkShouldIgnore(entity)) {
+                continue;
+            }
+
+            if (entity.getLocation().distance(location) <= auraEffect.getRadius()) {
+                candidateEntities.add((LivingEntity) entity);
+            }
+        }
+
+        return candidateEntities;
+
+    }
+
+    private Collection<Player> getPlayers(Collection<LivingEntity> livingEntities) {
+        Set<Player> players = new HashSet<>();
+        for (LivingEntity entity : livingEntities) {
+            if (entity instanceof Player) {
+                players.add((Player) entity);
+            }
+        }
+        return players;
+    }
+
+    private void runConsoleCommands(AuraEffect.PlayerCommandEffect playerCommandEffect, Collection<Player> players) {
+        for (Player player : players) {
+            String cmd = playerCommandEffect.getRunnableConsoleCommand(player);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        }
+    }
+
+    private ScheduledFuture getParticlesTask(SynchronizedLocation synchronizedLocation, AuraInfo auraInfo) {
         ShapeCreator shapeCreator = getAppropriateShapeCreator(auraInfo, auraInfo.getRotationMethod());
 
         return executorService.scheduleAtFixedRate(() -> {
+
             Location location = synchronizedLocation.getLocation();
+
+            if (location == null) {
+                return;
+            }
 
             RotationMethod rotationMethod = auraInfo.getRotationMethod();
             double angDeg = LocationUtil.getDegreesFromYaw(location.getYaw());
@@ -337,7 +419,7 @@ public class AssignedAura {
 
     }
 
-    private static GrowthListener getGrowthListener(SynchronizedLocation synchronizedLocation, ObjectContainer<GrowthTask> containedGrowthTask) {
+    private GrowthListener getGrowthListener(SynchronizedLocation synchronizedLocation, ObjectContainer<GrowthTask> containedGrowthTask) {
         return new GrowthListener() {
 
             @Override
@@ -357,12 +439,23 @@ public class AssignedAura {
     public void deactivate() {
 
         if (particleTask != null) {
-            particleTask.cancel(false);
+            particleTask.cancel(true);
         }
 
         if (effectsTask != null) {
             effectsTask.cancel();
         }
+
+        for (GrowthTask activeGrowthTask : new HashSet<>(activeGrowthTasks)) {
+            activeGrowthTask.cancel();
+        }
+        activeGrowthTasks.clear();
+
+        for (BukkitTask playerCommandEffectTask : new HashSet<>(playerCommandEffectTasks)) {
+            playerCommandEffectTask.cancel();
+        }
+        playerCommandEffectTasks.clear();
+
 
         assignedAuras.remove(this);
 
@@ -387,7 +480,7 @@ public class AssignedAura {
 
     private static void stopRotationClocks() {
         for (ScheduledFuture slowRotationClock : rotationClocks) {
-            slowRotationClock.cancel(false);
+            slowRotationClock.cancel(true);
         }
         rotationClocks.clear();
     }
@@ -400,15 +493,21 @@ public class AssignedAura {
         appropriateShapeCreatorMap.clear();
     }
 
-    static void stopIncompletedGrowthTasks() {
-        for (GrowthTask activeGrowthTask : new HashSet<>(activeGrowthTasks)) {
-            activeGrowthTask.cancel();
+    private static void stopIncompletedGrowthTasks() {
+        for (AssignedAura assignedAura : new HashSet<>(assignedAuras)) {
+            for (GrowthTask activeGrowthTask : new HashSet<>(assignedAura.activeGrowthTasks)) {
+                activeGrowthTask.cancel();
+            }
+            assignedAura.activeGrowthTasks.clear();
         }
-        activeGrowthTasks.clear();
     }
 
     AuraInfo getAuraInfo() {
         return auraInfo;
+    }
+
+    private interface CandidateEntities {
+        Collection<LivingEntity> get();
     }
 
 }
