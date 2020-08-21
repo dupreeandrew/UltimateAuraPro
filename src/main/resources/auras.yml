@@ -4,7 +4,7 @@
 #
 # Players can only use an aura if they have the permission for it: uap.aura.<aura-name>
 # For example, to use the aura "fastminer", players will need the permission: uap.aura.fastminer
-# Players can see a list of auras that they have through /aura help
+# Players can see a list of auras that they have through /aura
 #
 # Feel free to remove/add your own auras, but try to ensure that the properties for each shape stays.
 # Available aura appearance types:
@@ -36,36 +36,72 @@ jumper:
     # Format: <# seconds>s:</command>
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: helix
-    radius: 1.25
-    height: 0.75
-    particle-thickness: 1 # must be a whole number
-    distance-between-loops: .25
-    spacing-between-particles: 0.75
-    seconds-until-repeat: 1.0
-    # How the aura should rotate.
-    # Options:
-    # - none (do not rotate at all. Minimal CPU usage)
-    # - yaw (rotate to the direction of the player every repeat. Slight CPU usage due to increased calculations)
-    # - slow (rotate slightly every repeat. Slight CPU usage due to increased calculations)
-    # - always (constantly update every particle with direction of player. Many more calculations are being made)
-    # Many of the calculations are async, so players should be less susceptible to lag no matter the rotation method.
-    rotation-method: none
-    colors:
-      # format --> color hex code: occurrence frequency
-      # find color hex codes here: https://htmlcolorcodes.com/color-picker/
-      "#41dbee": 1 # blue
-    # Growth refers to any particle shapes being created over a period of time (so not instantly)
-    # For examples, users can type "/ptc grow" to make it so their trails grow over time, rather than instantly.
-    # These config are per-player.
-    growth-settings:
-      # whether or not this aura shape should instantly be emitted, or it should grow over time
-      enabled: true
-      # the interval at which particles should spawn.
-      seconds-between-particles: .05
-      # how many particles should spawn at a time, per player.
-      num-particles-at-a-time: 3
+  appearances:
+    - type: helix
+      radius: 1.25
+      height: 0.75
+      particle-thickness: 1 # must be a whole number
+      distance-between-loops: .25
+      spacing-between-particles: 0.75
+      seconds-until-repeat: 1.0
+      # How the aura should rotate.
+      # Options:
+      # - none (do not rotate at all. Minimal CPU usage)
+      # - yaw (rotate to the direction of the player every repeat. Slight CPU usage due to increased calculations)
+      # - slow (rotate slightly every repeat. Slight CPU usage due to increased calculations)
+      # - always (constantly update every particle with direction of player. Many more calculations are being made)
+      # Many of the calculations are async, so players should be less susceptible to lag no matter the rotation method.
+      rotation-method: none
+      colors:
+        # format --> color hex code: occurrence frequency
+        # find color hex codes here: https://htmlcolorcodes.com/color-picker/
+        "#41dbee": 1 # blue
+      # Growth refers to any particle shapes being created over a period of time (so not instantly)
+      # For examples, users can type "/ptc grow" to make it so their trails grow over time, rather than instantly.
+      # These config are per-player.
+      growth-settings:
+        # whether or not this aura shape should instantly be emitted, or it should grow over time
+        enabled: true
+        # the interval at which particles should spawn.
+        seconds-between-particles: .05
+        # how many particles should spawn at a time, per player.
+        num-particles-at-a-time: 3
+helix-star-combo:
+  description: "&7Very cool helix & star combo"
+  aura-effects:
+    target: none
+    radius: 7.50
+    list:
+      - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
+  appearances:
+    - type: helix
+      radius: 1.00
+      height: 0.75
+      particle-thickness: 1 # must be a whole number
+      distance-between-loops: .5
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 0.8
+      rotation-method: none
+      colors:
+        "#41dbee": 1 # blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
+    - type: star
+      radius: 1.00
+      particle-thickness: 3
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 1.1
+      rotation-method: slow
+      colors:
+        "#d5212e": 1 # red
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.03
+        num-particles-at-a-time: 2
 forcefield:
   description: "&7Gives resistance 1"
   aura-effects:
@@ -98,19 +134,19 @@ star:
       - INCREASE_DAMAGE:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: star
-    radius: 1.25
-    particle-thickness: 3
-    spacing-between-particles: 0.25
-    seconds-until-repeat: 1.2
-    rotation-method: slow
-    colors:
-      "#d5212e": 1 # red
-    growth-settings:
-      enabled: true
-      seconds-between-particles: 0.02
-      num-particles-at-a-time: 4
+  appearances:
+    - type: star
+      radius: 1.25
+      particle-thickness: 3
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 1.2
+      rotation-method: slow
+      colors:
+        "#d5212e": 1 # red
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.02
+        num-particles-at-a-time: 4
 cleric:
   description: "&7Heal not only yourself, but those around you! (wand activated)"
   aura-effects:
@@ -120,20 +156,20 @@ cleric:
       - REGENERATION:2
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: circle
-    radius: 1.25
-    particle-thickness: 2
-    spacing-between-particles: 0.20
-    seconds-until-repeat: 0.5
-    rotation-method: none
-    colors:
-      "#FF0000": 4 # red
-      "#0EBFE9": 1 # diamond blue
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 2
+  appearances:
+    - type: circle
+      radius: 1.25
+      particle-thickness: 2
+      spacing-between-particles: 0.20
+      seconds-until-repeat: 0.5
+      rotation-method: none
+      colors:
+        "#FF0000": 4 # red
+        "#0EBFE9": 1 # diamond blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
 circle:
   description: "&7Show off your inner aura! (does nothing)"
   aura-effects:
@@ -141,19 +177,19 @@ circle:
     radius: 0.00
     list:
     cmd-list:
-  appearance:
-    type: circle
-    radius: 1.25
-    particle-thickness: 2
-    spacing-between-particles: 0.20
-    seconds-until-repeat: 0.5
-    rotation-method: none
-    colors:
-      "#FFFF00": 1 # yellow
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 2
+  appearances:
+    - type: circle
+      radius: 1.25
+      particle-thickness: 2
+      spacing-between-particles: 0.20
+      seconds-until-repeat: 0.5
+      rotation-method: none
+      colors:
+        "#FFFF00": 1 # yellow
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
 poison:
   description: "&aPoison those around you!"
   aura-effects:
@@ -164,19 +200,19 @@ poison:
       - POISON:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: circle
-    radius: 1.25
-    particle-thickness: 2
-    spacing-between-particles: 0.20
-    seconds-until-repeat: 0.5
-    rotation-method: none
-    colors:
-      "#228B22": 1 # green
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 2
+  appearances:
+    - type: circle
+      radius: 1.25
+      particle-thickness: 2
+      spacing-between-particles: 0.20
+      seconds-until-repeat: 0.5
+      rotation-method: none
+      colors:
+        "#228B22": 1 # green
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
 deathgiver:
   description: "&8Give those death through your wand"
   aura-effects:
@@ -187,19 +223,19 @@ deathgiver:
       - HARM:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: circle
-    radius: 1.25
-    particle-thickness: 2
-    spacing-between-particles: 0.20
-    seconds-until-repeat: 0.7
-    rotation-method: none
-    colors:
-      "#000000": 1 # black
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 2
+  appearances:
+    - type: circle
+      radius: 1.25
+      particle-thickness: 2
+      spacing-between-particles: 0.20
+      seconds-until-repeat: 0.7
+      rotation-method: none
+      colors:
+        "#000000": 1 # black
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
 whirl:
   description: "&7Show off your inner aura! (does nothing)"
   aura-effects:
@@ -207,21 +243,21 @@ whirl:
     radius: 0.00
     list:
     cmd-list:
-  appearance:
-    type: whirl
-    radius: 1.25
-    particle-thickness: 1
-    spacing-between-particles: 0.09
-    seconds-until-repeat: 1.5
-    rotation-method: none
-    colors:
-      "#adefd1": 36 # teal
-      "#00203f": 36 # deep blue
-      "#9400D3": 9  # dark violet
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 5
+  appearances:
+    - type: whirl
+      radius: 1.25
+      particle-thickness: 1
+      spacing-between-particles: 0.09
+      seconds-until-repeat: 1.5
+      rotation-method: none
+      colors:
+        "#adefd1": 36 # teal
+        "#00203f": 36 # deep blue
+        "#9400D3": 9  # dark violet
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 5
 
 # The below auras do not have any particle effects.
 fastminer:
@@ -268,21 +304,21 @@ speed:
 # For internal use only
 stress-test:
   description: "&7Stress test performance. This may lag the client.. but try monitoring the server TPS through console"
-  appearance:
-    type: whirl
-    radius: 200.00
-    particle-thickness: 2
-    spacing-between-particles: .4
-    seconds-until-repeat: 1
-    rotation-method: always
-    colors:
-      "#adefd1": 36 # teal
-      "#00203f": 36 # deep blue
-      "#9400D3": 9  # dark violet
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .02
-      num-particles-at-a-time: 250
+  appearances:
+    - type: whirl
+      radius: 200.00
+      particle-thickness: 2
+      spacing-between-particles: .4
+      seconds-until-repeat: 1.0
+      rotation-method: always
+      colors:
+        "#adefd1": 36 # teal
+        "#00203f": 36 # deep blue
+        "#9400D3": 9  # dark violet
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .02
+        num-particles-at-a-time: 250
   aura-effects:
     target: all
     radius: 7.50

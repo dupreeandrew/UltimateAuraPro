@@ -1,6 +1,7 @@
 package me.dandrew.ultimateaurapro.config;
 
 import me.dandrew.ultimateaurapro.UltimateAuraProPlugin;
+import me.dandrew.ultimateaurapro.auragiving.AppearanceUnit;
 import me.dandrew.ultimateaurapro.auragiving.AuraInfo;
 import me.dandrew.ultimateaurapro.particlecreation.presets.Particools;
 import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
@@ -58,76 +59,76 @@ public enum AuraConfig {
             String auraName = entry.getKey();
             InstalledAura installedAura = new InstalledAura(auraName, description, auraInfo);
             installedAuras.add(installedAura);
-
-
         }
 
     }
 
     private AuraInfo getAuraInfoFromProperties(ConfigurationSection auraSection, StandardAuraProperties properties) {
-        switch (properties.getType()) {
-            case "none":
-                return new AuraInfo(properties.getAuraEffect());
-            case "helix":
-                return getHelixAuraInfo(auraSection, properties);
-            case "forcefield":
-                return BasicAuraSection.FORCEFIELD.getAuraInfo(auraSection);
-            case "star":
-                return BasicAuraSection.STAR.getAuraInfo(auraSection);
-            case "circle":
-                return BasicAuraSection.CIRCLE.getAuraInfo(auraSection);
-            case "whirl":
-                return BasicAuraSection.WHIRL.getAuraInfo(auraSection);
-            default:
-                throw new IllegalArgumentException("READ!!: Unsupported type: " + properties.getType()
-                        + ". Please check auras.yml for: " + auraSection.getName());
+
+        List<AppearanceUnit> appearanceUnits = new ArrayList<>();
+
+        for (AppearanceEntry entry : properties.getAppearanceEntries()) {
+            ShapeCreator shapeCreator;
+            switch (entry.getType()) {
+                case "none":
+                    return new AuraInfo(properties.getAuraEffect());
+                case "helix":
+                    shapeCreator = getHelixShapeCreator(entry);
+                    break;
+                case "forcefield":
+                    shapeCreator = BasicAuraSection.FORCEFIELD.getShapeCreator(entry);
+                    break;
+                case "star":
+                    shapeCreator = BasicAuraSection.STAR.getShapeCreator(entry);
+                    break;
+                case "circle":
+                    shapeCreator = BasicAuraSection.CIRCLE.getShapeCreator(entry);
+                    break;
+                case "whirl":
+                    shapeCreator = BasicAuraSection.WHIRL.getShapeCreator(entry);
+                    break;
+                default:
+                    throw new IllegalArgumentException("READ!!: Unsupported type: '" + entry.getType()
+                            + "'. Please check auras.yml for the aura: " + auraSection.getName());
+            }
+
+            AppearanceUnit appearanceUnit = new AppearanceUnit(shapeCreator, entry.getSecondsUntilRepeat(),
+                    entry.getRotationMethod(), entry.isGrowthAura());
+
+            appearanceUnits.add(appearanceUnit);
         }
+
+        return new AuraInfo(appearanceUnits, properties.getAuraEffect());
+
     }
 
-    private AuraInfo getHelixAuraInfo(ConfigurationSection auraSection, StandardAuraProperties properties) {
-        double radius = properties.getRadius();
-        double height = getAppearanceSection(auraSection).getDouble("height");
-        double distanceBetweenLoops = getAppearanceSection(auraSection).getDouble("distance-between-loops");
-        ShapeCreator helixCreator = getParticoolsFromAuraProperties(properties)
+    private ShapeCreator getHelixShapeCreator(AppearanceEntry entry) {
+        double radius = entry.getRadius();
+        double height = entry.getUniqueProperty("height", 2.00).doubleValue();
+        double distanceBetweenLoops = entry.getUniqueProperty("distance-between-loops", 1.00).doubleValue();
+        return getParticoolsFromAppearanceEntry(entry)
                 .getHelixCreator(radius, height, distanceBetweenLoops);
-        return getAuraInfo(helixCreator, properties);
-    }
-
-    private static ConfigurationSection getAppearanceSection(ConfigurationSection auraSection) {
-        ConfigurationSection appearanceSection = auraSection.getConfigurationSection("appearance");
-
-        if (appearanceSection == null) {
-            throw new IllegalArgumentException("Appearance section NOT FOUND");
-        }
-
-        return appearanceSection;
-
     }
 
     /**
      * Retrieves all the Particools-specific properties from StandardAuraProperties,
      * and creates an object out of it.
      */
-    private static Particools getParticoolsFromAuraProperties(StandardAuraProperties s) {
+    private static Particools getParticoolsFromAppearanceEntry(AppearanceEntry e) {
 
         Particools.Builder builder = new Particools.Builder();
-        for (Map.Entry<Color, Integer> colorFreqeuencyEntry : s.getColorFrequencyMap().entrySet()) {
+        for (Map.Entry<Color, Integer> colorFreqeuencyEntry : e.getColorFrequencyMap().entrySet()) {
             Color color = colorFreqeuencyEntry.getKey();
             int frequency = colorFreqeuencyEntry.getValue();
             builder.setColorProbabilityWeight(color, frequency);
         }
 
-        return builder.setParticleThickness(s.getThickness())
-                .setSpacingBetweenParticles(s.getSpacingBetweenParticles())
-                .setSecondsBetweenGrowthParticles(s.getGrowthSecondsBetweenParticles())
-                .setGrowthParticlesPerTick(s.getGrowthNumParticlesAtATime())
+        return builder.setParticleThickness(e.getThickness())
+                .setSpacingBetweenParticles(e.getSpacingBetweenParticles())
+                .setSecondsBetweenGrowthParticles(e.getGrowthSecondsBetweenParticles())
+                .setGrowthParticlesPerTick(e.getGrowthNumParticlesAtATime())
                 .build();
 
-    }
-
-    private static AuraInfo getAuraInfo(ShapeCreator shapeCreator, StandardAuraProperties s) {
-        shapeCreator.addOffset(0, 0.05, 0);
-        return new AuraInfo(shapeCreator, s.getSecondsUntilRepeat(), s.getRotationMethod(), s.isGrowthAura(), s.getAuraEffect());
     }
 
     public List<InstalledAura> getInstalledAuras() {
@@ -158,16 +159,10 @@ public enum AuraConfig {
             this.id = id;
         }
 
-        public AuraInfo getAuraInfo(ConfigurationSection shapeSection) {
-            StandardAuraProperties standardAuraProperties = StandardAuraProperties.read(shapeSection);
-            return getAuraInfo(standardAuraProperties);
-        }
-
-        private AuraInfo getAuraInfo(StandardAuraProperties standardAuraProperties) {
-            Particools particools = getParticoolsFromAuraProperties(standardAuraProperties);
-            double radius = standardAuraProperties.getRadius();
-            ShapeCreator shapeCreator = getShapeCreator(particools, radius);
-            return AuraConfig.getAuraInfo(shapeCreator, standardAuraProperties);
+        public ShapeCreator getShapeCreator(AppearanceEntry entry) {
+            Particools particools = getParticoolsFromAppearanceEntry(entry);
+            double radius = entry.getRadius();
+            return getShapeCreator(particools, radius);
         }
 
         private ShapeCreator getShapeCreator(Particools particools, double radius) {

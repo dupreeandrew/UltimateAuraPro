@@ -13,101 +13,85 @@ import java.util.*;
 
 public class StandardAuraProperties {
 
-
-    private String type;
+    private List<AppearanceEntry> appearanceEntries;
     private String description;
-    private double radius;
-    private int thickness;
-    private double spacingBetweenParticles;
-    private double secondsUntilRepeat;
-    private RotationMethod rotationMethod;
-    private Map<Color, Integer> colorFrequencyMap;
-    private boolean isGrowthAura;
-    private double growthSecondsBetweenParticles;
-    private int growthNumParticlesAtATime;
     private AuraEffect auraEffect;
 
 
-    private StandardAuraProperties(String type, String description, double radius, int thickness, double spacingBetweenParticles,
-                                   double secondsUntilRepeat, RotationMethod rotationMethod, Map<String, Object> rawColorHexMap,
-                                   boolean isGrowthAura, double growthSecondsBetweenParticles, int growthNumParticlesAtATime,
-                                   AuraEffect auraEffect) {
-        this.type = type;
+    private StandardAuraProperties(String description, List<AppearanceEntry> appearanceEntries, AuraEffect auraEffect) {
+        this.appearanceEntries = appearanceEntries;
         this.description = description;
-        this.radius = radius;
-        this.thickness = thickness;
-        this.spacingBetweenParticles = spacingBetweenParticles;
-        this.secondsUntilRepeat = secondsUntilRepeat;
-        this.rotationMethod = rotationMethod;
-        this.colorFrequencyMap = getConvertedRawColorMap(rawColorHexMap);
-        this.isGrowthAura = isGrowthAura;
-        this.growthSecondsBetweenParticles = growthSecondsBetweenParticles;
-        this.growthNumParticlesAtATime = growthNumParticlesAtATime;
         this.auraEffect = auraEffect;
     }
 
-    private static Map<Color, Integer> getConvertedRawColorMap(Map<String, Object> rawColorHexFrequencyMap) {
-        Map<Color, Integer> colorFrequencyMap = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> colorHexFrequencyEntry : rawColorHexFrequencyMap.entrySet()) {
-            String hex = colorHexFrequencyEntry.getKey();
-            Color color = getColorFromHex(hex);
-            int frequency = (Integer) colorHexFrequencyEntry.getValue();
-            colorFrequencyMap.put(color, frequency);
-        }
-        return Collections.unmodifiableMap(colorFrequencyMap);
-    }
 
-    private static Color getColorFromHex(String hex) {
-        if (hex.charAt(0) == '#') {
-            hex = hex.substring(1);
-        }
-        int rgb = Integer.valueOf(hex, 16);
-        return Color.fromRGB(rgb);
-    }
-
-    public static StandardAuraProperties read(ConfigurationSection rawAuraProperties) {
+    static StandardAuraProperties read(ConfigurationSection rawAuraProperties) {
 
         String description = rawAuraProperties.getString("description", "?");
         AuraEffect auraEffect = getAuraEffect(rawAuraProperties);
 
         // Begin Appearance Section
-        ConfigurationSection appearanceSection = rawAuraProperties.getConfigurationSection("appearance");
-        if (appearanceSection == null) {
-            return new StandardAuraProperties("none", description, 0, 0, 0, 0, RotationMethod.NONE, new HashMap<>(), false, -1, -1, auraEffect);
+        List<LinkedHashMap<String, Object>> appearanceSections = (List<LinkedHashMap<String, Object>>) rawAuraProperties.get("appearances");
+        List<AppearanceEntry> appearanceEntries = new ArrayList<>();
+
+        if (appearanceSections != null) {
+            for (LinkedHashMap<String, Object> appearanceMap : appearanceSections) {
+                AppearanceEntry appearanceEntry = getAppearanceEntry(appearanceMap);
+                appearanceEntries.add(appearanceEntry);
+            }
         }
 
-        String type = appearanceSection.getString("type", "circle");
+        return new StandardAuraProperties(description, appearanceEntries, auraEffect);
+
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private static AppearanceEntry getAppearanceEntry(LinkedHashMap<String, Object> appearanceMap) {
+        if (appearanceMap == null) {
+            return null;
+        }
+
+        String type = (String) appearanceMap.getOrDefault("type", "circle");
         if ("none".equals(type)) {
-            return new StandardAuraProperties("none", description, 0, 0, 0, 0, RotationMethod.NONE, new HashMap<>(), false, -1, -1, auraEffect);
+            return null;
         }
 
-        double radius = appearanceSection.getDouble("radius", 3.0);
-        int thickness = appearanceSection.getInt("particle-thickness", 2);
-        double spacingBetweenParticles = appearanceSection.getDouble("spacing-between-particles", 1.0);
-        double secondsUntilRepeat = appearanceSection.getDouble("seconds-until-repeat", 2.0);
-        String rotationMethodString = appearanceSection.getString("rotation-method", "none");
+        double radius = ((Number) appearanceMap.getOrDefault("radius", 3.0)).doubleValue();
+        int thickness = ((Number) appearanceMap.getOrDefault("particle-thickness", 2)).intValue();
+        double spacingBetweenParticles = ((Number) appearanceMap.getOrDefault("spacing-between-particles", 1.0)).doubleValue();
+        double secondsUntilRepeat = ((Number) appearanceMap.getOrDefault("seconds-until-repeat", 2.0)).doubleValue();
+        String rotationMethodString = (String) appearanceMap.getOrDefault("rotation-method", "none");
         RotationMethod rotationMethod = RotationMethod.fromName(rotationMethodString);
 
 
-        Map<String, Object> rawColorHexMap;
-        if (appearanceSection.isSet("colors")) {
-            rawColorHexMap = appearanceSection.getConfigurationSection("colors").getValues(false);
-        }
-        else {
-            rawColorHexMap = new HashMap<>();
+
+        LinkedHashMap<String, Object> rawColorHexMap = (LinkedHashMap<String, Object>) appearanceMap.getOrDefault("colors", new LinkedHashMap<>());
+        if (rawColorHexMap.size() == 0) {
             rawColorHexMap.put("#00F5FF", 1);
         }
+        Map<Color, Integer> colorMap = getConvertedRawColorMap(rawColorHexMap);
 
 
-        ConfigurationSection growthSection = appearanceSection.getConfigurationSection("growth-settings");
-        boolean isNull = (growthSection == null);
-        boolean isGrowthAura = !isNull && growthSection.getBoolean("enabled", false);
-        double growthSecondsBetweenParticles = isNull ? 0.05 : growthSection.getDouble("seconds-between-particles", 0.05);
-        int numParticlesAtATime = isNull ? 3 : growthSection.getInt("num-particles-at-a-time", 3);
+        LinkedHashMap<String, Object> growthMap = (LinkedHashMap<String, Object>) appearanceMap.get("growth-settings");
+        boolean isNull = (growthMap == null);
+        boolean isGrowthAura = !isNull && (boolean) growthMap.getOrDefault("enabled", false);
+        double growthSecondsBetweenParticles = isNull ? 0.05 : ((Number) growthMap.getOrDefault("seconds-between-particles", 0.05)).doubleValue();
+        int numParticlesAtATime = isNull ? 3 : ((Number) growthMap.getOrDefault("num-particles-at-a-time", 3)).intValue();
 
-        return new StandardAuraProperties(type, description, radius, thickness, spacingBetweenParticles, secondsUntilRepeat,
-                rotationMethod, rawColorHexMap, isGrowthAura, growthSecondsBetweenParticles, numParticlesAtATime, auraEffect);
-
+        return new AppearanceEntry.Builder()
+                .setType(type)
+                .setRadius(radius)
+                .setThickness(thickness)
+                .setSpacingBetweenParticles(spacingBetweenParticles)
+                .setSecondsUntilRepeat(secondsUntilRepeat)
+                .setRotationMethod(rotationMethod)
+                .setColorFrequencyMap(colorMap)
+                .setIsGrowthAura(isGrowthAura)
+                .setGrowthSecondsBetweenParticles(growthSecondsBetweenParticles)
+                .setGrowthNumParticlesAtATime(numParticlesAtATime)
+                .setRawObjectMap(appearanceMap)
+                .build();
 
     }
 
@@ -223,55 +207,31 @@ public class StandardAuraProperties {
         return commandEffects;
     }
 
+    private static Map<Color, Integer> getConvertedRawColorMap(Map<String, Object> rawColorHexFrequencyMap) {
+        Map<Color, Integer> colorFrequencyMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> colorHexFrequencyEntry : rawColorHexFrequencyMap.entrySet()) {
+            String hex = colorHexFrequencyEntry.getKey();
+            Color color = getColorFromHex(hex);
+            int frequency = (Integer) colorHexFrequencyEntry.getValue();
+            colorFrequencyMap.put(color, frequency);
+        }
+        return Collections.unmodifiableMap(colorFrequencyMap);
+    }
 
+    private static Color getColorFromHex(String hex) {
+        if (hex.charAt(0) == '#') {
+            hex = hex.substring(1);
+        }
+        int rgb = Integer.valueOf(hex, 16);
+        return Color.fromRGB(rgb);
+    }
 
-
-
-    public String getType() {
-        return type;
+    public List<AppearanceEntry> getAppearanceEntries() {
+        return appearanceEntries;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public double getRadius() {
-        return radius;
-    }
-
-    int getThickness() {
-        return thickness;
-    }
-
-    double getSpacingBetweenParticles() {
-        return spacingBetweenParticles;
-    }
-
-    double getSecondsUntilRepeat() {
-        return secondsUntilRepeat;
-    }
-
-    RotationMethod getRotationMethod() {
-        return rotationMethod;
-    }
-
-    /**
-     * @return immutable map representing color and its respective frequency
-     */
-    Map<Color, Integer> getColorFrequencyMap() {
-        return colorFrequencyMap;
-    }
-
-    boolean isGrowthAura() {
-        return isGrowthAura;
-    }
-
-    double getGrowthSecondsBetweenParticles() {
-        return growthSecondsBetweenParticles;
-    }
-
-    int getGrowthNumParticlesAtATime() {
-        return growthNumParticlesAtATime;
     }
 
     AuraEffect getAuraEffect() {

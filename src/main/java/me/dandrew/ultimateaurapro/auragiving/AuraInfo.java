@@ -1,16 +1,14 @@
 package me.dandrew.ultimateaurapro.auragiving;
 
-import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An immutable class representing information regarding an aura
  */
 public class AuraInfo {
 
-    private ShapeCreator shapeCreator;
-    private long millisecondsUntilRepeat;
-    private RotationMethod rotationMethod;
-    private boolean isGrowthAura;
+    private List<AppearanceUnit> appearanceUnits;
     private AuraEffect auraEffect;
     private boolean isEffectOnlyAura = false;
 
@@ -19,19 +17,16 @@ public class AuraInfo {
     private static int lastId;
 
     public AuraInfo(AuraEffect auraEffect) {
-        this(null, -1, null, false, auraEffect);
+        this(new ArrayList<>(), auraEffect);
         this.isEffectOnlyAura = true;
     }
 
-    public AuraInfo(ShapeCreator shapeCreator, double secondsUntilRepeat, RotationMethod rotationMethod, boolean isGrowthAura, AuraEffect auraEffect) {
-        this(shapeCreator, secondsUntilRepeat, rotationMethod, isGrowthAura, auraEffect, ++lastId);
+    public AuraInfo(List<AppearanceUnit> appearanceUnits, AuraEffect auraEffect) {
+        this(appearanceUnits, auraEffect, ++lastId);
     }
 
-    private AuraInfo(ShapeCreator shapeCreator, double secondsUntilRepeat, RotationMethod rotationMethod, boolean isGrowthAura, AuraEffect auraEffect, int id) {
-        this.shapeCreator = shapeCreator;
-        this.millisecondsUntilRepeat = Math.max((long) (secondsUntilRepeat * 1000.00), 5); // a fifth of a tick
-        this.rotationMethod = rotationMethod;
-        this.isGrowthAura = isGrowthAura;
+    private AuraInfo(List<AppearanceUnit> appearanceUnits, AuraEffect auraEffect, int id) {
+        this.appearanceUnits = appearanceUnits;
         this.auraEffect = auraEffect;
         this.id = id;
     }
@@ -40,20 +35,8 @@ public class AuraInfo {
         return isEffectOnlyAura;
     }
 
-    ShapeCreator getShapeCreatorCopy() {
-        return shapeCreator.getCopy();
-    }
-
-    long getMillisecondsUntilRepeat() {
-        return millisecondsUntilRepeat;
-    }
-
-    RotationMethod getRotationMethod() {
-        return rotationMethod;
-    }
-
-    boolean isGrowthAura() {
-        return isGrowthAura;
+    public List<AppearanceUnit> getAppearanceUnits() {
+        return appearanceUnits;
     }
 
     AuraEffect getAuraEffect() {

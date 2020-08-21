@@ -12,6 +12,11 @@
 # Available "aura-effects" targets:
 # - none, self, wand, wand-self, all, others, hostile,
 # - info on these options can be found in help.txt
+#
+# You may also make an aura take on multiple shapes.
+# If you look at the "appearances" section, you'll see that each shape has it's own section, indicated by a "-" character.
+# Just copy and paste the shape section into another aura's "appearances" section, and it'll take on that shape too.
+# An example of this is shown at the bottom of this file.
 
 # Helix Shaped Aura:
 helix-shaped-aura:
@@ -23,21 +28,21 @@ helix-shaped-aura:
       - LUCK:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: helix
-    radius: 1.50
-    height: 0.75
-    particle-thickness: 1 # must be a whole number
-    distance-between-loops: .25
-    spacing-between-particles: 0.75
-    seconds-until-repeat: 1.0
-    rotation-method: none
-    colors:
-      "#41dbee": 1 # blue
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 3
+  appearances:
+    - type: helix
+      radius: 1.50
+      height: 0.75
+      particle-thickness: 1 # must be a whole number
+      distance-between-loops: .25
+      spacing-between-particles: 0.75
+      seconds-until-repeat: 1.0
+      rotation-method: none
+      colors:
+        "#41dbee": 1 # blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 3
 
 # Forcefield Shaped Aura
 forcefield-shaped-aura:
@@ -49,20 +54,20 @@ forcefield-shaped-aura:
       - LUCK:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: forcefield
-    radius: 1.75
-    particle-thickness: 1
-    spacing-between-particles: 0.3
-    seconds-until-repeat: 4.0
-    rotation-method: none
-    colors:
-      "#2a2b2d": 1 # dark gray
-      "#2da8d8": 1 # light blue
-    growth-settings:
-      enabled: true
-      seconds-between-particles: 0.05
-      num-particles-at-a-time: 16
+  appearances:
+    - type: forcefield
+      radius: 1.75
+      particle-thickness: 1
+      spacing-between-particles: 0.3
+      seconds-until-repeat: 4.0
+      rotation-method: none
+      colors:
+        "#2a2b2d": 1 # dark gray
+        "#2da8d8": 1 # light blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.05
+        num-particles-at-a-time: 16
 
 # Star Shaped Aura
 star-shaped-aura:
@@ -74,19 +79,19 @@ star-shaped-aura:
       - LUCK:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: star
-    radius: 1.25
-    particle-thickness: 3
-    spacing-between-particles: 0.25
-    seconds-until-repeat: 1.2
-    rotation-method: slow
-    colors:
-      "#d5212e": 1 # red
-    growth-settings:
-      enabled: true
-      seconds-between-particles: 0.02
-      num-particles-at-a-time: 4
+  appearances:
+    - type: star
+      radius: 1.25
+      particle-thickness: 3
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 1.2
+      rotation-method: slow
+      colors:
+        "#d5212e": 1 # red
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.02
+        num-particles-at-a-time: 4
 
 # Circle Shaped Aura
 circle-shaped-aura:
@@ -98,19 +103,19 @@ circle-shaped-aura:
       - LUCK:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: circle
-    radius: 1.25
-    particle-thickness: 2
-    spacing-between-particles: 0.20
-    seconds-until-repeat: 0.5
-    rotation-method: none
-    colors:
-      "#FFFF00": 1 # yellow
-    growth-settings:
-      enabled: true
-      seconds-between-particles: .05
-      num-particles-at-a-time: 2
+  appearances:
+    - type: circle
+      radius: 1.25
+      particle-thickness: 2
+      spacing-between-particles: 0.20
+      seconds-until-repeat: 0.5
+      rotation-method: none
+      colors:
+        "#FFFF00": 1 # yellow
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
 
 # Whirl Shaped Aura
 whirl-shaped-aura:
@@ -122,18 +127,58 @@ whirl-shaped-aura:
       - LUCK:1
     cmd-list:
       - "3s:/a-test-command %username%"
-  appearance:
-    type: whirl
-    radius: 1.25
-    particle-thickness: 1
-    spacing-between-particles: 0.09
-    seconds-until-repeat: 1.5
-    rotation-method: none
-    colors:
-      "#adefd1": 36 # teal
-      "#00203f": 36 # deep blue
-      "#9400D3": 9  # dark violet
-    growth-settings:
-      enabled: true
-      seconds-between-particles: 0.05
-      num-particles-at-a-time: 5
+  appearances:
+    - type: whirl
+      radius: 1.25
+      particle-thickness: 1
+      spacing-between-particles: 0.09
+      seconds-until-repeat: 1.5
+      rotation-method: none
+      colors:
+        "#adefd1": 36 # teal
+        "#00203f": 36 # deep blue
+        "#9400D3": 9  # dark violet
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.05
+        num-particles-at-a-time: 5
+
+# Helix & Star combined:
+# You can combine shapes into an aura. Just copy & paste the shape details into "appearances"
+# "Shape details" is each item marked with a (-) bullet under the "appearances" section.
+helix-star-combo:
+  description: "&7Very cool helix & star combo"
+  aura-effects:
+    target: none
+    radius: 7.50
+    list:
+      - LUCK:1
+    cmd-list:
+      - "3s:/a-test-command %username%"
+  appearances:
+    - type: helix
+      radius: 1.00
+      height: 0.75
+      particle-thickness: 1 # must be a whole number
+      distance-between-loops: .5
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 0.8
+      rotation-method: none
+      colors:
+        "#41dbee": 1 # blue
+      growth-settings:
+        enabled: true
+        seconds-between-particles: .05
+        num-particles-at-a-time: 2
+    - type: star
+      radius: 1.00
+      particle-thickness: 3
+      spacing-between-particles: 0.25
+      seconds-until-repeat: 1.1
+      rotation-method: slow
+      colors:
+        "#d5212e": 1 # red
+      growth-settings:
+        enabled: true
+        seconds-between-particles: 0.03
+        num-particles-at-a-time: 2

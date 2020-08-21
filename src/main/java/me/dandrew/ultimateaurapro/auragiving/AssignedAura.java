@@ -34,15 +34,14 @@ public class AssignedAura {
     private @Nullable Location permanentLocation;
 
     private AuraInfo auraInfo;
-    private ScheduledFuture particleTask;
+    private List<ScheduledFuture> particleTasks;
     private BukkitTask effectsTask;
     private Set<BukkitTask> playerCommandEffectTasks = new HashSet<>();
 
     private Set<GrowthTask> activeGrowthTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-
     private static Map<Integer, ShapeCreator> appropriateShapeCreatorMap
-            = new HashMap<>(); // K: auraSettings.getId(), V: appropriate ShapeCreator
+            = new HashMap<>(); // K: AppearanceUnit.getId(), V: appropriate ShapeCreator
     private static List<ScheduledFuture> rotationClocks = new ArrayList<>();
     private static ScheduledExecutorService executorService = UltimateAuraProPlugin.executorService;
 
@@ -56,7 +55,7 @@ public class AssignedAura {
         initAllEffects(playerName, auraInfo);
 
         if (!auraInfo.isEffectOnlyAura()) {
-            this.particleTask = getParticlesTask(getLocationCallbackFromPlayerName(playerName), auraInfo);
+            this.particleTasks = getParticlesTasks(getLocationCallbackFromPlayerName(playerName), auraInfo);
         }
 
         assignedAuras.add(this);
@@ -72,7 +71,7 @@ public class AssignedAura {
         initAllEffects(location, auraInfo);
 
         if (!auraInfo.isEffectOnlyAura()) {
-            this.particleTask = getParticlesTask(() -> location, auraInfo);
+            this.particleTasks = getParticlesTasks(() -> location, auraInfo);
         }
 
         assignedAuras.add(this);
@@ -311,9 +310,17 @@ public class AssignedAura {
         }
     }
 
-    private ScheduledFuture getParticlesTask(SynchronizedLocation synchronizedLocation, AuraInfo auraInfo) {
-        ShapeCreator shapeCreator = getAppropriateShapeCreator(auraInfo, auraInfo.getRotationMethod());
+    private List<ScheduledFuture> getParticlesTasks(SynchronizedLocation synchronizedLocation, AuraInfo auraInfo) {
+        List<ScheduledFuture> particleTasks = new ArrayList<>();
+        for (AppearanceUnit appearanceUnit : auraInfo.getAppearanceUnits()) {
+            ScheduledFuture particleTask = getParticleTask(synchronizedLocation, auraInfo, appearanceUnit);
+            particleTasks.add(particleTask);
+        }
+        return particleTasks;
+    }
 
+    private ScheduledFuture getParticleTask(SynchronizedLocation synchronizedLocation, AuraInfo auraInfo, AppearanceUnit appearanceUnit) {
+        ShapeCreator shapeCreator = getAppropriateShapeCreator(auraInfo, appearanceUnit);
         return executorService.scheduleAtFixedRate(() -> {
 
             Location location = synchronizedLocation.getLocation();
@@ -322,9 +329,9 @@ public class AssignedAura {
                 return;
             }
 
-            RotationMethod rotationMethod = auraInfo.getRotationMethod();
+            RotationMethod rotationMethod = appearanceUnit.getRotationMethod();
             double angDeg = LocationUtil.getDegreesFromYaw(location.getYaw());
-            if (auraInfo.isGrowthAura()) {
+            if (appearanceUnit.isGrowthAura()) {
 
 
                 ObjectContainer<GrowthTask> containedGrowthTask = new ObjectContainer<>();
@@ -368,7 +375,7 @@ public class AssignedAura {
                 }
 
             }
-        }, 1, auraInfo.getMillisecondsUntilRepeat(), TimeUnit.MILLISECONDS);
+        }, 1, appearanceUnit.getMillisecondsUntilRepeat(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -377,14 +384,14 @@ public class AssignedAura {
      * A rotation method of SLOW has its rotation clock pre-initialized from #ensureAuraInfoIsInstalled();
      * A rotation method of ALWAYS results in a new ShapeCreator being generated.
      */
-    private static ShapeCreator getAppropriateShapeCreator(AuraInfo auraInfo, RotationMethod rotationMethod) {
+    private static ShapeCreator getAppropriateShapeCreator(AuraInfo auraInfo, AppearanceUnit appearanceUnit) {
 
-        if (rotationMethod == RotationMethod.ALWAYS) {
-            return auraInfo.getShapeCreatorCopy();
+        if (appearanceUnit.getRotationMethod() == RotationMethod.ALWAYS) {
+            return appearanceUnit.getShapeCreatorCopy();
         }
 
-        ensureAuraInfoIsInstalled(auraInfo);
-        return appropriateShapeCreatorMap.get(auraInfo.getId());
+        ensureAuraInfoIsInstalled(auraInfo, appearanceUnit);
+        return appropriateShapeCreatorMap.get(appearanceUnit.getId());
 
     }
 
@@ -392,27 +399,28 @@ public class AssignedAura {
      * Initializes a key/value pair for appropriateShapeCreatorMap();
      * Which also... allows for #getAppropriateShapeCreator() to work
      */
-    private static void ensureAuraInfoIsInstalled(AuraInfo auraInfo) {
+    private static void ensureAuraInfoIsInstalled(AuraInfo auraInfo, AppearanceUnit appearanceUnit) {
 
         if (auraInfo.isEffectOnlyAura()) {
             return;
         }
 
-        if (appropriateShapeCreatorMap.containsKey(auraInfo.getId())) {
+        if (appropriateShapeCreatorMap.containsKey(appearanceUnit.getId())) {
             return;
         }
 
-        if (auraInfo.getRotationMethod() == RotationMethod.ALWAYS) {
+        if (appearanceUnit.getRotationMethod() == RotationMethod.ALWAYS) {
+            // this should not throw.
             throw new IllegalStateException("Aura Data should not be installed since the rotation method is ALWAYS");
         }
 
-        ShapeCreator shapeCreatorCopy = auraInfo.getShapeCreatorCopy();
-        appropriateShapeCreatorMap.put(auraInfo.getId(), shapeCreatorCopy);
+        ShapeCreator shapeCreatorCopy = appearanceUnit.getShapeCreatorCopy();
+        appropriateShapeCreatorMap.put(appearanceUnit.getId(), shapeCreatorCopy);
 
-        if (auraInfo.getRotationMethod() == RotationMethod.SLOW) {
+        if (appearanceUnit.getRotationMethod() == RotationMethod.SLOW) {
             ScheduledFuture rotationClock = executorService.scheduleAtFixedRate(() -> {
                 shapeCreatorCopy.changeOrientation(60, 0);
-            }, 2, auraInfo.getMillisecondsUntilRepeat(), TimeUnit.MILLISECONDS);
+            }, 2, appearanceUnit.getMillisecondsUntilRepeat(), TimeUnit.MILLISECONDS);
 
             rotationClocks.add(rotationClock);
         }
@@ -438,9 +446,10 @@ public class AssignedAura {
 
     public void deactivate() {
 
-        if (particleTask != null) {
+        for (ScheduledFuture particleTask : particleTasks) {
             particleTask.cancel(true);
         }
+        particleTasks.clear();
 
         if (effectsTask != null) {
             effectsTask.cancel();
