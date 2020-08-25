@@ -5,6 +5,7 @@ import me.dandrew.ultimateaurapro.auragiving.AppearanceUnit;
 import me.dandrew.ultimateaurapro.auragiving.AuraInfo;
 import me.dandrew.ultimateaurapro.particlecreation.presets.Particools;
 import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
+import me.dandrew.ultimateaurapro.particlecreation.presets.shapes.*;
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -107,7 +108,7 @@ public enum AuraConfig {
         double height = entry.getUniqueProperty("height", 2.00).doubleValue();
         double distanceBetweenLoops = entry.getUniqueProperty("distance-between-loops", 1.00).doubleValue();
         return getParticoolsFromAppearanceEntry(entry)
-                .getHelixCreator(radius, height, distanceBetweenLoops);
+                .getPreconfiguredShapeCreator(new ShapeHelix(height, distanceBetweenLoops), radius);
     }
 
     /**
@@ -166,19 +167,32 @@ public enum AuraConfig {
         }
 
         private ShapeCreator getShapeCreator(Particools particools, double radius) {
+            Shape shape;
             switch (id) {
                 case 0:
-                    ShapeCreator sphereCreator = particools.getSphereCreator(radius);
-                    sphereCreator.addOffset(0, 0.75, 0);
-                    return sphereCreator;
+                    shape = new ShapeSphere();
+                    break;
                 case 1:
-                    return particools.getStarCreator(radius);
+                    shape = new ShapeStar();
+                    break;
                 case 2:
-                    return particools.getCircleCreator(radius);
+                    shape = new ShapeCircle();
+                    break;
                 case 3:
-                    return particools.getWhirlCreator(radius, 5);
+                    shape = new ShapeWhirl(5);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Could not map enum id to a ultimateaurapro shape creator method.");
             }
-            throw new UnsupportedOperationException("Could not map enum id to a ultimateaurapro shape creator method.");
+
+            ShapeCreator shapeCreator = particools.getPreconfiguredShapeCreator(shape, radius);
+            if (id == 0) {
+                shapeCreator.addOffset(0, 0.75, 0);
+            }
+
+            return shapeCreator;
+
+
         }
 
     }

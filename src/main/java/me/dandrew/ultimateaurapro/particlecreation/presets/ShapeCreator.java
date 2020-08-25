@@ -30,8 +30,6 @@ public class ShapeCreator {
 
     private Phaser modPhaser = new Phaser(1);
 
-
-
     private ShapeCreator(AsyncEmitter emitter, Queue<Vector> particleOffsets, Queue<Iterable<Vector>> particleOffsetCollections) {
         this.emitter = emitter;
         this.particleOffsets = particleOffsets;
