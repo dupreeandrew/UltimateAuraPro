@@ -6,7 +6,6 @@ import me.dandrew.ultimateaurapro.auragiving.AuraWand;
 import me.dandrew.ultimateaurapro.command.BaseCommand;
 import me.dandrew.ultimateaurapro.config.AuraConfig;
 import me.dandrew.ultimateaurapro.config.LocationAuraConfig;
-import me.dandrew.ultimateaurapro.particlecreation.presets.Particools;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.PluginManager;
@@ -85,10 +84,6 @@ public class UltimateAuraProPlugin extends JavaPlugin {
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(new AuraTracker(), this);
         pluginManager.registerEvents(new AuraWand(), this);
-    }
-
-    public Particools.Builder getParticoolsBuilder() {
-        return new Particools.Builder();
     }
 
     @Override

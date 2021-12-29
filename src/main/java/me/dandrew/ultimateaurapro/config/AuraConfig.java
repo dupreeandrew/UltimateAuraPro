@@ -3,8 +3,9 @@ package me.dandrew.ultimateaurapro.config;
 import me.dandrew.ultimateaurapro.UltimateAuraProPlugin;
 import me.dandrew.ultimateaurapro.auragiving.AppearanceUnit;
 import me.dandrew.ultimateaurapro.auragiving.AuraInfo;
+import me.dandrew.ultimateaurapro.particlecreation.AsyncEmitter;
 import me.dandrew.ultimateaurapro.particlecreation.presets.Particools;
-import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
+import me.dandrew.ultimateaurapro.particlecreation.presets.shapecreatorrevised.ShapeCreator;
 import me.dandrew.ultimateaurapro.particlecreation.presets.shapes.*;
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
@@ -89,7 +90,7 @@ public enum AuraConfig {
                     shapeCreator = BasicAuraSection.WHIRL.getShapeCreator(entry);
                     break;
                 default:
-                    throw new IllegalArgumentException("READ!!: Unsupported type: '" + entry.getType()
+                    throw new IllegalArgumentException("READ!!: Unsupported aura type: '" + entry.getType()
                             + "'. Please check auras.yml for the aura: " + auraSection.getName());
             }
 
@@ -117,18 +118,19 @@ public enum AuraConfig {
      */
     private static Particools getParticoolsFromAppearanceEntry(AppearanceEntry e) {
 
-        Particools.Builder builder = new Particools.Builder();
+        AsyncEmitter.Builder builder = new AsyncEmitter.Builder();
         for (Map.Entry<Color, Integer> colorFreqeuencyEntry : e.getColorFrequencyMap().entrySet()) {
             Color color = colorFreqeuencyEntry.getKey();
             int frequency = colorFreqeuencyEntry.getValue();
-            builder.setColorProbabilityWeight(color, frequency);
+            builder.addColor(color, frequency);
         }
 
-        return builder.setParticleThickness(e.getThickness())
-                .setSpacingBetweenParticles(e.getSpacingBetweenParticles())
-                .setSecondsBetweenGrowthParticles(e.getGrowthSecondsBetweenParticles())
-                .setGrowthParticlesPerTick(e.getGrowthNumParticlesAtATime())
+        AsyncEmitter asyncEmitter = builder.setParticleThickness(e.getThickness())
+                .setSecondsBetweenGrowthIterations(e.getGrowthSecondsBetweenParticles())
+                .setNumGrowthIterationsAtATime(e.getGrowthNumParticlesAtATime())
                 .build();
+
+        return new Particools(asyncEmitter, e.getSpacingBetweenParticles());
 
     }
 

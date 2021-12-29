@@ -1,5 +1,5 @@
 name: UltimateAuraPro
-version: 1.0
+version: 1.2
 author: dandrew7
 main: me.dandrew.ultimateaurapro.UltimateAuraProPlugin
 api-version: 1.13
@@ -8,4 +8,4 @@ softdepend: [Citizens]
 commands:
   aura:
       usage: /<command>
-      description: cool auras
+      description: Activate user auras

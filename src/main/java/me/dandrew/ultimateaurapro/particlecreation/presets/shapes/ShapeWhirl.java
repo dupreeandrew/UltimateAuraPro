@@ -5,7 +5,7 @@ import me.dandrew.ultimateaurapro.util.math.NewtonRaphson;
 import org.bukkit.util.Vector;
 
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 
 public class ShapeWhirl implements Shape {
 
@@ -16,20 +16,20 @@ public class ShapeWhirl implements Shape {
     }
 
     @Override
-    public Queue<Vector> getOffsets(double radius, double spacingBetweenParticles) {
+    public List<Vector> getOffsets(double radius, double spacingBetweenParticles) {
 
         // r = polarEqMultiplier * theta
 
-        double polarEqMultiplier = 1; // basically determines the curvature of the whirl. lower = more curve.
+        double polarEqMultiplier = 1.0; // basically determines the curvature of the whirl. lower = more curve.
         double finalTheta = radius / polarEqMultiplier; // this ensures that the radius is preserved at end of whirl piece
 
         double whirlPieceArcLength = getArcLength(polarEqMultiplier, finalTheta);
-        double distanceBetweenParticles = MathHelp.getAdjustedSpaceBetweenParticles(whirlPieceArcLength, whirlPieceArcLength);
+        double distanceBetweenParticles = MathHelp.getAdjustedSpaceBetweenParticles(whirlPieceArcLength, spacingBetweenParticles);
 
-        Queue<Vector> particleOffsets = new LinkedList<>();
+        List<Vector> particleOffsets = new LinkedList<>();
         particleOffsets.add(new Vector(0, 0 ,0));
 
-        double currentTheta = getNextUpperBound(polarEqMultiplier, distanceBetweenParticles, 0, finalTheta);
+        double currentTheta = getNextUpperBound(polarEqMultiplier, distanceBetweenParticles, 0.0, finalTheta);
         boolean lastIteration = false;
         while (!lastIteration) {
 

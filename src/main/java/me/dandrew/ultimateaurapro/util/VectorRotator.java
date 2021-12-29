@@ -5,6 +5,7 @@ import org.bukkit.util.Vector;
 public class VectorRotator {
 
     public static void changeOrientationOfOffsets(Iterable<Vector> offsets, double degreesRotation, double degreesTilt) {
+
         final double RADS_ROTATION = Math.toRadians(degreesRotation);
         final double ROTATION_SIN_VALUE = Math.sin(RADS_ROTATION);
         final double ROTATION_COS_VALUE = Math.cos(RADS_ROTATION);

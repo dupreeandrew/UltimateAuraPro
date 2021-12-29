@@ -22,8 +22,8 @@ class MathHelp {
      * that, if repeatedly added together, will match perfectly with the provided arc length's distance.
      */
     static double getAdjustedSpaceBetweenParticles(double arcLength, double spacingBetweenParticles) {
-        int numSegments = (int) (arcLength / spacingBetweenParticles);
-        return arcLength / numSegments;
+        double numSegments = (int) (arcLength / spacingBetweenParticles);
+        return arcLength / numSegments * 1.0;
     }
 
 

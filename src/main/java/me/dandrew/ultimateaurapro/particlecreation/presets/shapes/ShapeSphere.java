@@ -5,14 +5,14 @@ import org.bukkit.util.Vector;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 public class ShapeSphere implements Shape {
 
     @Override
-    public Queue<Vector> getOffsets(double radius, double spacingBetweenParticles) {
-        Queue<Vector> offsets = new LinkedList<>();
+    public List<Vector> getOffsets(double radius, double spacingBetweenParticles) {
+        List<Vector> offsets = new LinkedList<>();
         for (Map.Entry<Double, Double> yOffsetRadiusEntry : getHollowSphereCircleOffsetRadiusMap(radius, spacingBetweenParticles).entrySet()) {
             double circleYOffset = yOffsetRadiusEntry.getKey();
             double circleRadius = yOffsetRadiusEntry.getValue();

@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.bukkit.util.Vector;
 
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 
 public class ShapeHelix implements Shape {
 
@@ -17,10 +17,10 @@ public class ShapeHelix implements Shape {
     }
 
     @Override
-    public Queue<Vector> getOffsets(double radius, double spacingBetweenParticles) {
+    public List<Vector> getOffsets(double radius, double spacingBetweenParticles) {
 
         AtomicDouble atomicTheta = new AtomicDouble(0);
-        Queue<Vector> queuedParticleOffsets = new LinkedList<>();
+        List<Vector> queuedParticleOffsets = new LinkedList<>();
         double deltaTheta = MathHelp.getDeltaThetaForCircle(radius, 2 * Math.PI,  spacingBetweenParticles);
         while (true) {
 

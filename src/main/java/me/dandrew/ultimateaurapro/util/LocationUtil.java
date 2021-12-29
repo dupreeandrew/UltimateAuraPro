@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class LocationUtil {
     public static double getXandZDistance(Location loc1, Location loc2) {
@@ -46,8 +45,8 @@ public class LocationUtil {
         return (positiveOrNegativeDegrees < 0) ? 360.00 + positiveOrNegativeDegrees : positiveOrNegativeDegrees % 360.00;
     }
 
-    public static Queue<Vector> cloneOffsets(Iterable<Vector> offsets) {
-        Queue<Vector> clonedQueue = new LinkedList<>();
+    public static List<Vector> cloneOffsets(Iterable<Vector> offsets) {
+        List<Vector> clonedQueue = new LinkedList<>();
         for (Vector offset : offsets) {
             Vector offsetClone = offset.clone();
             clonedQueue.add(offsetClone);
@@ -55,8 +54,8 @@ public class LocationUtil {
         return clonedQueue;
     }
 
-    public static Queue<Iterable<Vector>> cloneSetsOfOffsets(Queue<? extends Iterable<Vector>> setsOfOffsets) {
-        Queue<Iterable<Vector>> setsOfOffsetsClone = new LinkedList<>();
+    public static List<Iterable<Vector>> cloneSetsOfOffsets(List<? extends Iterable<Vector>> setsOfOffsets) {
+        List<Iterable<Vector>> setsOfOffsetsClone = new LinkedList<>();
         for (Iterable<Vector> setOfOffset : setsOfOffsets) {
             List<Vector> offsetList = new ArrayList<>();
             for (Vector offset : setOfOffset) {

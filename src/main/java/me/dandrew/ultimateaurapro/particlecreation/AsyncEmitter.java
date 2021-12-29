@@ -65,6 +65,8 @@ public class AsyncEmitter {
 
     }
 
+
+
     public void emitParticles(Location location, Iterable<Vector> particleOffsets, boolean clone) {
         Iterable<Vector> submittedParticleOffsets = getSubmittableParticleOffsets(particleOffsets, clone);
         executorService.submit(() -> {
@@ -100,7 +102,7 @@ public class AsyncEmitter {
         return colors.get(colorIndex);
     }
 
-    public GrowthTask growParticles(GrowthListener growthListener, Queue<Vector> particleOffsets,
+    public GrowthTask growParticles(GrowthListener growthListener, List<Vector> particleOffsets,
                                     boolean trackYaw, boolean clone) {
         Iterable<Vector> submittableParticleOffsets = getSubmittableParticleOffsets(particleOffsets, clone);
         Iterator<Vector> iterator = submittableParticleOffsets.iterator();
@@ -213,7 +215,7 @@ public class AsyncEmitter {
         }, 3, TimeUnit.SECONDS);
     }
 
-    public GrowthTask growParticleCollections(GrowthListener growthListener, Queue<Iterable<Vector>> setsOfOffsets,
+    public GrowthTask growParticleCollections(GrowthListener growthListener, List<Iterable<Vector>> setsOfOffsets,
                                         boolean trackYaw, boolean clone) {
         setsOfOffsets = clone ? LocationUtil.cloneSetsOfOffsets(setsOfOffsets) : setsOfOffsets;
         Iterator<Iterable<Vector>> iterator = setsOfOffsets.iterator();
@@ -225,6 +227,67 @@ public class AsyncEmitter {
         for (Collection<Vector> particleOffsets : setsOfParticleOffsets) {
             emitParticles(location, particleOffsets, clone);
         }
+    }
+
+    public static class Builder {
+
+        private List<Color> colors = new ArrayList<>();
+        private double secondsBetweenGrowthIterations = 0.05;
+        private int numIterationsAtATime = 3;
+        private int particleThickness = 1;
+
+        public Builder addColor(Color color) {
+            colors.add(color);
+            return this;
+        }
+
+        public Builder addColor(Color color, int occurrence) {
+            for (int i = 0; i < occurrence; i++){
+                colors.add(color);
+            }
+            return this;
+        }
+
+        public Builder setSecondsBetweenGrowthIterations(double seconds) {
+            this.secondsBetweenGrowthIterations = seconds;
+            return this;
+        }
+
+        public Builder setNumGrowthIterationsAtATime(int numIterationsAtATime) {
+            this.numIterationsAtATime = numIterationsAtATime;
+            return this;
+        }
+
+        public Builder setParticleThickness(int particleThickness) {
+            this.particleThickness = particleThickness;
+            return this;
+        }
+
+
+        public AsyncEmitter build() {
+
+            if (colors.size() == 0) {
+                throw new IllegalStateException("At least one color is needed.");
+            }
+
+            if (particleThickness < 1) {
+                throw new IllegalStateException("Particle thickness must be greater than or equal to 1");
+            }
+
+            if (secondsBetweenGrowthIterations < 0) {
+                throw new IllegalStateException("Invalid seconds between growth particles. Must be greater than 0");
+            }
+
+            if (numIterationsAtATime < 1) {
+                throw new IllegalStateException("Particles per tick must be greater than or equal to 1");
+            }
+
+            return new AsyncEmitter(colors, particleThickness, secondsBetweenGrowthIterations, numIterationsAtATime);
+
+        }
+
+
+
     }
 
 }

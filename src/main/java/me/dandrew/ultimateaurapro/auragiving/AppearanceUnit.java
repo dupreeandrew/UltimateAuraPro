@@ -1,6 +1,6 @@
 package me.dandrew.ultimateaurapro.auragiving;
 
-import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
+import me.dandrew.ultimateaurapro.particlecreation.presets.shapecreatorrevised.ShapeCreator;
 
 public class AppearanceUnit {
 

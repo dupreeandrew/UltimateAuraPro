@@ -4,7 +4,7 @@ import me.dandrew.ultimateaurapro.UltimateAuraProPlugin;
 import me.dandrew.ultimateaurapro.lib.SpecialEntityChecker;
 import me.dandrew.ultimateaurapro.particlecreation.GrowthListener;
 import me.dandrew.ultimateaurapro.particlecreation.GrowthTask;
-import me.dandrew.ultimateaurapro.particlecreation.presets.ShapeCreator;
+import me.dandrew.ultimateaurapro.particlecreation.presets.shapecreatorrevised.ShapeCreator;
 import me.dandrew.ultimateaurapro.util.LocationUtil;
 import me.dandrew.ultimateaurapro.util.ObjectContainer;
 import me.dandrew.ultimateaurapro.util.TaskRepeater;
@@ -268,6 +268,7 @@ public class AssignedAura {
 
         Set<LivingEntity> candidateEntities = new HashSet<>();
         for (Entity entity : nearbyEntities) {
+
             if (!(entity instanceof LivingEntity)) {
                 continue;
             }

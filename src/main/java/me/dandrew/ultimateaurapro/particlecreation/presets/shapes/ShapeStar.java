@@ -3,14 +3,14 @@ package me.dandrew.ultimateaurapro.particlecreation.presets.shapes;
 import org.bukkit.util.Vector;
 
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.List;
 
 public class ShapeStar implements Shape {
 
     @Override
-    public Queue<Vector> getOffsets(double radius, double spacingBetweenParticles) {
+    public List<Vector> getOffsets(double radius, double spacingBetweenParticles) {
 
-        Queue<Vector> starOffsets = new LinkedList<>();
+        List<Vector> starOffsets = new LinkedList<>();
         double[] anglesOfAStar = new double[]{306, 90, 234, 18, 162}; // each point has a degree change of (360/5) = 72.
         for (int i = 0; i < anglesOfAStar.length; i++) {
             double degrees = anglesOfAStar[i];
