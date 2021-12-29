@@ -1,0 +1,2 @@
+# UltimateAuraPro
+UltimateAuraPro is a loaded & efficient plugin that allows players to use auras. Auras are passive abilities that grant an effect to the owner and/or those who are nearby. These effects can be based on commands running at regular intervals, and/or status effects included in Minecraft. Auras can also optionally have a customizable appearance that is generated via async & multiple threads, which can help the server run at its highest performance.
